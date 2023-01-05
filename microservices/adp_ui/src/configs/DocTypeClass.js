@@ -47,6 +47,11 @@ const docclasstype=[
     'doc_type':'Supporting Documents',
     'doc_class': 'Prior-authorization Form'
 },
+{
+    'value':'bsc_pa_form',
+    'doc_type':'Supporting Documents',
+    'doc_class': 'BSC Prior-authorization Form'
+},
 ]
 
 const sorting=docclasstype.sort(function (a, b) {

@@ -62,7 +62,7 @@ PROCESS_TIMEOUT_SECONDS = 600
 #List of application forms and supporting documents
 APPLICATION_FORMS = ["unemployment_form"]
 SUPPORTING_DOCS = ["driver_license", "claims_form", "utility_bill", "pay_stub",
-                   "prior_auth_form"]
+                   "prior_auth_form", "bsc_pa_form"]
 
 # Doc approval status, will reflect on the Frontend app.
 STATUS_APPROVED = "Approved"
@@ -109,6 +109,7 @@ DOC_CLASS_STANDARDISATION_MAP = {
     "Utility": "utility_bill",
     "PayStub": "pay_stub",
     "PriorAuth": "prior_auth_form",
+    "bsc_pa_form": "bsc_pa_form",
 }
 
 CLASSIFIER = "classifier"
@@ -117,6 +118,7 @@ CLASSIFIER = "classifier"
 DOC_CLASS_CONFIG_MAP = {
     "Generic": "Claim",
     "Prior_Auth": "PriorAuth",
+    "bsc_pa_form": "bsc_pa_form"
 }
 # standard document_class values
 
