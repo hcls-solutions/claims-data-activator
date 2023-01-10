@@ -272,10 +272,9 @@ module "docai" {
   processors = {
 //    unemployment_form = "FORM_PARSER_PROCESSOR"
     claims_form       = "FORM_PARSER_PROCESSOR"
+    bsc_package_form       = "FORM_PARSER_PROCESSOR"
+    bsc_pa_form       = "CUSTOM_EXTRACTION_PROCESSOR"
     prior_auth_form   = "CUSTOM_EXTRACTION_PROCESSOR"
-//    driver_license    = "US_DRIVER_LICENSE_PROCESSOR"
-    # utility_bill      = "UTILITY_PROCESSOR"
-    # pay_stub        = "PAYSTUB_PROCESSOR"
   }
 }
 
@@ -381,6 +380,16 @@ resource "null_resource" "pa-forms-demo" {
   ]
   provisioner "local-exec" {
     command = "gsutil -m cp ../../../sample_data/test/form.pdf gs://${local.forms_gcs_path}/demo/"
+  }
+}
+
+# Copying Configuration for Mapping.
+resource "null_resource" "pa-docai-entity-mapping" {
+  depends_on = [
+    google_storage_bucket.default
+  ]
+  provisioner "local-exec" {
+    command = "gsutil cp ../../../common/src/common/docai_entity_mapping.json gs://${var.project_id}/config/docai_entity_mapping.json"
   }
 }
 

@@ -31,9 +31,9 @@
             "goog-packaged-solution": "prior-authorization"
         },
         "location": "us",
-        "parser_name": "BSC_PA_Package_Processor",
-        "parser_type": "FORM_PARSER_PROCESSOR",
-        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id6>"
+        "parser_name": "prior_auth_form",
+        "parser_type": "CUSTOM_EXTRACTION_PROCESSOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id4>"
     },
     "classifier": {
         "labels": {
@@ -42,6 +42,6 @@
         "location": "us",
         "parser_name": "classifier",
         "parser_type": "CUSTOM_CLASSIFICATION_PROCESSOR",
-        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id7>"
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id5>"
     }
 }

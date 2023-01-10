@@ -120,7 +120,7 @@ async def classifiction(case_id: str, uid: str, gcs_url: str):
 
     Logger.info(f"Starting classification for {case_id} and {uid} with gcs_url {gcs_url}")
 
-    #Making prediction
+    # Making prediction
     doc_prediction_result = predict_doc_type(case_id, uid, gcs_url)
 
     if doc_prediction_result:

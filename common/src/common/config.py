@@ -61,8 +61,7 @@ PROCESS_TIMEOUT_SECONDS = 600
 
 #List of application forms and supporting documents
 APPLICATION_FORMS = ["bsc_package_form"]
-SUPPORTING_DOCS = ["driver_license", "claims_form", "utility_bill", "pay_stub",
-                   "prior_auth_form", "bsc_pa_form"]
+SUPPORTING_DOCS = ["driver_license", "claims_form", "prior_auth_form", "bsc_pa_form"]
 
 # Doc approval status, will reflect on the Frontend app.
 STATUS_APPROVED = "Approved"
@@ -89,22 +88,17 @@ BIGQUERY_DB = "validation.validation_table"
 VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 
 # ========= Classification =======================
-# Endpoint Id where model is deployed.
-# # TODO: Please update this to your deployed VertexAI model ID.
-# VERTEX_AI_CONFIG = load_config("vertex_ai_config.json")
-# assert VERTEX_AI_CONFIG, "Unable to locate 'vertex_ai_config.json'"
-#
-# CLASSIFICATION_ENDPOINT_ID = VERTEX_AI_CONFIG["endpoint_id"]
-# assert CLASSIFICATION_ENDPOINT_ID, "CLASSIFICATION_ENDPOINT_ID is not defined."
-#
-# #Prediction Confidence threshold for the classifier to reject any prediction
-# #less than the threshold value.
-# CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.85
+#Prediction Confidence threshold for the classifier to reject any prediction
+#less than the threshold value.
+CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.85
 
-# Map to standardise predicted document class from classifier to the DOCAI_ENTITY_MAPPING
+#When classifier is not enabled or the form cannot be classified, let's try Form Parser for the best possible Results
+CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS = "Claim"
+
+# Map to standardise predicted document class from classifier to
 DOC_CLASS_STANDARDISATION_MAP = {
     "Generic": "claims_form",
-    "Claims": "claims_form",
+    "Claim": "claims_form",
     "Prior_Auth": "prior_auth_form",
 }
 
@@ -114,16 +108,25 @@ CLASSIFIER = "classifier"
 
 # To add parsers, edit /terraform/enviroments/dev/main.tf
 PARSER_CONFIG_FILE = os.environ.get("PARSER_CONFIG_FILE", "parser_config.json")
+DOCAI_ENTITY_MAPPING_FILE = os.environ.get("DOCAI_ENTITY_MAPPING_FILE", "docai_entity_mapping.json")
 
 
 def get_parser_config():
   assert PARSER_CONFIG_FILE, f"PARSER_CONFIG_FILE is not set '{PARSER_CONFIG_FILE}'"
   print(f"get_parser_config using PARSER_CONFIG_FILE={PARSER_CONFIG_FILE}")
-  parser_config = load_config(PARSER_CONFIG_FILE)
+  config = load_config(PARSER_CONFIG_FILE)
   print(f"parser_config_file={PARSER_CONFIG_FILE}")
-  assert parser_config, f"Unable to locate '{PARSER_CONFIG_FILE}'"
-  return parser_config
+  assert config, f"Unable to locate '{PARSER_CONFIG_FILE} or incorrect JSON file'"
+  return config
 
+
+def get_docai_entity_mapping():
+  assert DOCAI_ENTITY_MAPPING_FILE, f"DOCAI_ENTITY_MAPPING_FILE is not set '{DOCAI_ENTITY_MAPPING_FILE}'"
+  print(f"get_docai_entity_mapping using DOCAI_ENTITY_MAPPING_FILE={DOCAI_ENTITY_MAPPING_FILE}")
+  config = load_config(DOCAI_ENTITY_MAPPING_FILE)
+  print(f"get_docai_entity_mapping={DOCAI_ENTITY_MAPPING_FILE}")
+  assert config, f"Unable to locate '{DOCAI_ENTITY_MAPPING_FILE} or incorrect JSON file'"
+  return config
 
 # ========= HITL and Frontend UI =======================
 
