@@ -40,7 +40,7 @@
             "goog-packaged-solution": "prior-authorization"
         },
         "location": "us",
-        "parser_name": "unemployment_form",
+        "parser_name": "Classifier",
         "parser_type": "CUSTOM_CLASSIFICATION_PROCESSOR",
         "processor_id": "projects/prior-auth-poc/locations/us/processors/3a77fb3cb9dd3de1"
     }
