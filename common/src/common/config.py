@@ -60,7 +60,7 @@ REGION = "us-central1"
 PROCESS_TIMEOUT_SECONDS = 600
 
 #List of application forms and supporting documents
-APPLICATION_FORMS = ["unemployment_form"]
+APPLICATION_FORMS = ["bsc_package_form"]
 SUPPORTING_DOCS = ["driver_license", "claims_form", "utility_bill", "pay_stub",
                    "prior_auth_form", "bsc_pa_form"]
 
@@ -101,26 +101,19 @@ VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 # #less than the threshold value.
 # CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.85
 
-# Map to standardise predicted document class from classifier to
+# Map to standardise predicted document class from classifier to the DOCAI_ENTITY_MAPPING
 DOC_CLASS_STANDARDISATION_MAP = {
     "UE": "unemployment_form",
     "DL": "driver_license",
-    "Claim": "claims_form",
+    "Generic": "claims_form",
     "Utility": "utility_bill",
     "PayStub": "pay_stub",
-    "PriorAuth": "prior_auth_form",
+    "Prior_Auth": "prior_auth_form",
     "bsc_pa_form": "bsc_pa_form",
+    "bsc_package_form": "bsc_package_form",
 }
 
 CLASSIFIER = "classifier"
-
-# Translation of the DOC AI Classifier Labels (defined in the UI) to Document Types above map, since labels cannot be renamed
-DOC_CLASS_CONFIG_MAP = {
-    "Generic": "Claim",
-    "Prior_Auth": "PriorAuth",
-    "bsc_pa_form": "bsc_pa_form"
-}
-# standard document_class values
 
 # ========= DocAI Parsers =======================
 

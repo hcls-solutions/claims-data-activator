@@ -142,8 +142,11 @@ async def classifiction(case_id: str, uid: str, gcs_url: str):
         raise HTTPException(status_code=422, detail="Invalid Document")
 
       doc_type = None
-      doc_class = DOC_CLASS_STANDARDISATION_MAP[
+      if doc_prediction_result["predicted_class"] in DOC_CLASS_STANDARDISATION_MAP.keys():
+        doc_class = DOC_CLASS_STANDARDISATION_MAP[
           doc_prediction_result["predicted_class"]]
+      else:
+        doc_class = doc_prediction_result["predicted_class"]
 
       if doc_class in APPLICATION_FORMS:
         doc_type = "application_form"

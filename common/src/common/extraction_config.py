@@ -342,6 +342,14 @@ DOCAI_ENTITY_MAPPING = {
                 }
             }
         },
+        "bsc_package_form": {
+            "default_entities": {
+                "FROM": ["from"],
+                "PHONE": ["phone"],
+                "TO": ["to"],
+                "FAX": ["fax"],
+            }
+        },
         "claims_form": {
             "default_entities": {
                 "Date": ["date"],

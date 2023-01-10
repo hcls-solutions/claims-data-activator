@@ -179,22 +179,16 @@ The Custom Document Extractor has been deployed, but not yet trained. The steps 
   ```
 
 ### Custom Document Classifier
+If you have just one form and you want to use it for classifier, use following utlitty to copy same folder into the gcs bucket, later to use for classification. At least 10 instances are needed (all for Training set).
+```shell
+utils/copy_forms.sh -f sample_data/<path_to_form>.pdf -d gs://<path_to_dgs_uri> -c 10
+```
+
 Configure Custom Document Classifier (Currently feature is not available for GA and needs to be requested via the [form](https://docs.google.com/forms/d/e/1FAIpQLSfDuC9bGyEwnseEYIC3I2LvNjzz-XZ2n1RS4X5pnIk2eSbk3A/viewform))
-  - Create New Label: `<name-of-form_type>` 
+  - Create New Label: `<name-of-form_type>` (for this example: bsc_pa_form)
   - Train Classifier to using sample forms to classify that label.
   - Deploy the new trained version via the UI.
   - Set the new version as default and test it manually via the UI by uploading the test document. is it classified properly?
-  - inside `common/config.py` and the Label Mapping:
-    ```python
-    DOC_CLASS_STANDARDISATION_MAP = {
-       #---
-       "bsc_pa_form": "bsc_pa_form",
-    }
-    DOC_CLASS_CONFIG_MAP = {
-       #----
-       "bsc_pa_form": "bsc_pa_form"
-    }    
-      ```
 
 ### Custom Configuration
   - Add mapping as part of DOC_CLASS_CONFIG_MAP to map Labels to the expected /supported document types inside [config.py](common/config.py).
@@ -210,6 +204,19 @@ Configure Custom Document Classifier (Currently feature is not available for GA 
   - Add or edit existing form block as below to use the processor_id line  (replace everything inside `<..>` with your data)
   ```shell
       "<name-of-form_type>_form": {
+          "labels": {
+              "goog-packaged-solution": "prior-authorization"
+          },
+          "location": "us",
+          "parser_name": "<name_of_parser>",
+          "parser_type": "CUSTOM_DOCUMENT_EXTRACTOR",
+          "processor_id": "projects/<project_id>/locations/us/processors/<processor_id>"
+      },
+  ```
+
+Like in the example above, this would be:
+  ```shell
+      "bsc_pa_form": {
           "labels": {
               "goog-packaged-solution": "prior-authorization"
           },

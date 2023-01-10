@@ -20,9 +20,6 @@ first page
 """
 # from utils.classification.pdf_splitter import PDFManager
 from .download_pdf_gcs import download_pdf_gcs
-# from common.config import CLASSIFICATION_CONFIDENCE_THRESHOLD, CLASSIFICATION_ENDPOINT_ID, PROJECT_ID
-from common.config import PROJECT_ID
-from common.config import DOC_CLASS_CONFIG_MAP
 import json
 from google.cloud import documentai_v1 as documentai
 import sys
@@ -99,8 +96,8 @@ class DocClassifier:
 
     for entity in parser_doc_data.entities:
       label = entity.type_.replace("/", "_")
-      if label in DOC_CLASS_CONFIG_MAP.keys():
-        label = DOC_CLASS_CONFIG_MAP[label]
+      # if label in DOC_CLASS_CONFIG_MAP.keys():
+      #   label = DOC_CLASS_CONFIG_MAP[label]
       score = entity.confidence
       Logger.info(f"Type = {label}, with confidence = {score}")
       scores.append(score)
