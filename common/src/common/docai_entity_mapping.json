@@ -1,0 +1,112 @@
+{
+    "all": {
+        "prior_auth_form": {
+            "default_entities": {
+                "rpName": ["rpName"],
+                "rpDate": ["rpDate"],
+                "rpPhone": ["rpPhone"],
+                "rpFax": ["rpFax"],
+                "rpNPI": ["rpNPI"],
+                "rpSpecialty": ["rpSpecialty"],
+                "rpContactName": ["rpContactName"],
+                "rpContactPhone": ["rpContactPhone"],
+                "requestTypeExtension": ["requestTypeExtension"],
+                "requestTypeInitial": ["requestTypeInitial"],
+                "prevAuthNumber": ["prevAuthNumber"],
+                "reviewTypeUrgent": ["reviewTypeUrgent"],
+                "reviewTypeNonUrgent": ["reviewTypeNonUrgent"],
+                "clinicalReasonForUrgency": ["clinicalReasonForUrgency"],
+                "pcpPhone": ["pcpPhone"],
+                "pcpFax": ["pcpFax"],
+                "pcpName": ["pcpName"],
+                "spPhone": ["spPhone"],
+                "spFax": ["spFax"],
+                "spNPI": ["spNPI"],
+                "spSpecialty": ["spSpecialty"],
+                "genderOther": ["genderOther"],
+                "genderUnknown": ["genderUnknown"],
+                "patientName": ["patientName"],
+                "patientPhone": ["patientPhone"],
+                "patientDoB": ["patientDoB"],
+                "subscriberName": ["subscriberName"],
+                "memberID": ["memberID"],
+                "groupNumber": ["groupNumber"],
+                "genderFemale": ["genderFemale"],
+                "genderMale": ["genderMale"],
+                "issuerPhone": ["issuerPhone"],
+                "issuerFax": ["issuerFax"],
+                "issuerDate": ["issuerDate"]
+            }
+        },
+        "bsc_package_form": {
+            "default_entities": {
+                "FROM": ["from"],
+                "PHONE": ["phone"],
+                "TO": ["to"],
+                "FAX": ["fax"]
+            }
+        },
+        "bsc_pa_form": {
+            "default_entities": {
+                "issurerName": ["issurerName"],
+                "routineFax": ["routineFax"],
+                "modificationFax": ["modificationFax"],
+                "retroFax": ["retroFax"],
+                "urgentFax": ["urgentFax"],
+                "beneficiaryLanguage": ["beneficiaryLanguage"],
+                "beneficiaryAddress": ["beneficiaryAddress"],
+                "beneficiaryState": ["beneficiaryState"],
+                "beneficiaryZip": ["beneficiaryZip"],
+                "beneficiaryPlanNumber": ["beneficiaryPlanNumber"],
+                "memberEffectiveDate": ["memberEffectiveDate"],
+                "beneficiaryPhone": ["beneficiaryPhone"],
+                "beneficiaryName": ["beneficiaryName"],
+                "beneficiaryDoB": ["beneficiaryDoB"],
+                "dateLastAuthorized": ["dateLastAuthorized"],
+                "prevAuthNumber": ["prevAuthNumber"],
+                "procCode": ["procCode"],
+                "procDesc": ["procDesc"],
+                "ipaResponsibility": ["ipaResponsibility"],
+                "diagCode": ["diagCode"],
+                "diagDescription": ["diagDescription"],
+                "rpName": ["rpName"],
+                "rpSign": ["rpSign"],
+                "rpJustification": ["rpJustification"],
+                "referralRequestedBy": ["referralRequestedBy"],
+                "rpPhone": ["rpPhone"],
+                "rpFax": ["rpFax"],
+                "spFacilityName": ["spFacilityName"],
+                "spNpi": ["spNpi"],
+                "spPhone2": ["spPhone2"],
+                "spFax2": ["spFax2"],
+                "spAddress": ["spAddress"],
+                "spFax1": ["spFax1"],
+                "spName": ["spName"],
+                "rpNpi": ["rpNpi"],
+                "rpSpecialty": ["rpSpecialty"],
+                "spRequestDate": ["spRequestDate"]
+            }
+        },
+        "claims_form": {
+            "default_entities": {
+                "Date": ["date"],
+                "Name": ["name"],
+                "Occupation": ["occupation"],
+                "Emergency Contact": ["emergency_contact"],
+                "Referred By": ["referred_by"],
+                "Gender": ["gender"],
+                "DOB": ["dob"],
+                "Email": ["email"],
+                "City": ["city"],
+                "State": ["state"],
+                "Address": ["address"],
+                "Zip": ["zip"],
+                "Emergency Contact Phone": ["emergency_contact_phone"],
+                "Marital Status": ["marital_status"],
+                "Are you currently taking any medication? (If y...": ["medications"],
+                "_Phone": ["PHONE"],
+                "Describe your medical concerns (symptoms, diag...": ["medical_condition"]
+            }
+        }
+    }
+}

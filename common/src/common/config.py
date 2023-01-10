@@ -103,14 +103,9 @@ VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 
 # Map to standardise predicted document class from classifier to the DOCAI_ENTITY_MAPPING
 DOC_CLASS_STANDARDISATION_MAP = {
-    "UE": "unemployment_form",
-    "DL": "driver_license",
     "Generic": "claims_form",
-    "Utility": "utility_bill",
-    "PayStub": "pay_stub",
+    "Claims": "claims_form",
     "Prior_Auth": "prior_auth_form",
-    "bsc_pa_form": "bsc_pa_form",
-    "bsc_package_form": "bsc_package_form",
 }
 
 CLASSIFIER = "classifier"
