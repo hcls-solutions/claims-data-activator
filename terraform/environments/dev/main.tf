@@ -19,12 +19,12 @@
 locals {
   env = var.env
   #TODO: change
-  region           = var.region
-  firestore_region = var.firestore_region
-  multiregion      = var.multiregion
-  project_id       = var.project_id
-  forms_gcs_path   = "${var.project_id}-pa-forms"
-  config_path      = "${var.project_id}-config"
+  region             = var.region
+  firestore_region   = var.firestore_region
+  multiregion        = var.multiregion
+  project_id         = var.project_id
+  forms_gcs_path     = "${var.project_id}-pa-forms"
+  config_bucket_name = var.config_bucket
   services = [
     "aiplatform.googleapis.com",           # Vertex AI
     "appengine.googleapis.com",            # AppEngine
@@ -272,8 +272,6 @@ module "docai" {
   processors = {
 //    unemployment_form = "FORM_PARSER_PROCESSOR"
     claims_form       = "FORM_PARSER_PROCESSOR"
-    bsc_package_form       = "FORM_PARSER_PROCESSOR"
-    bsc_pa_form       = "CUSTOM_EXTRACTION_PROCESSOR"
     prior_auth_form   = "CUSTOM_EXTRACTION_PROCESSOR"
   }
 }
@@ -314,7 +312,7 @@ resource "google_storage_bucket" "document-load" {
 
 # Bucket to store config
 resource "google_storage_bucket" "pa-config" {
-  name                        = local.config_path
+  name                        = local.config_bucket_name
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
@@ -389,7 +387,7 @@ resource "null_resource" "pa-docai-entity-mapping" {
     google_storage_bucket.default
   ]
   provisioner "local-exec" {
-    command = "gsutil cp ../../../common/src/common/docai_entity_mapping.json gs://${var.project_id}/config/docai_entity_mapping.json"
+    command = "gsutil cp ../../../common/src/common/docai_entity_mapping.json gs://${local.config_bucket_name}/docai_entity_mapping.json"
   }
 }
 
