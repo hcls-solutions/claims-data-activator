@@ -1,0 +1,38 @@
+{
+    "bsc_pa_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "bsc_pa_form",
+        "parser_type": "CUSTOM_EXTRACTION_PROCESSOR",
+        "processor_id": "projects/dp-cda-engine/locations/us/processors/396f80427602ac0e"
+    },
+    "bsc_package_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "bsc_package_form",
+        "parser_type": "FORM_PARSER_PROCESSOR",
+        "processor_id": "projects/dp-cda-engine/locations/us/processors/7f666b2675ce794a"
+    },
+    "claims_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "claims_form",
+        "parser_type": "FORM_PARSER_PROCESSOR",
+        "processor_id": "projects/dp-cda-engine/locations/us/processors/f1a131750532816d"
+    },
+    "prior_auth_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "prior_auth_form",
+        "parser_type": "CUSTOM_EXTRACTION_PROCESSOR",
+        "processor_id": "projects/dp-cda-engine/locations/us/processors/a9c8fd36c9fde0d7"
+    }
+}

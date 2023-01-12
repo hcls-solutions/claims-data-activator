@@ -1,0 +1,47 @@
+{
+    "claims_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "claims_form",
+        "parser_type": "FORM_PARSER_PROCESSOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/<docai-processor-id1>"
+    },
+    "prior_auth_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "prior_auth_form",
+        "parser_type": "CUSTOM_DOCUMENT_EXTRACTOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id4>"
+    },
+    "bsc_pa_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "BSC_PA_Processor",
+        "parser_type": "CUSTOM_DOCUMENT_EXTRACTOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id5>"
+    },
+    "bsc_package_form": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "prior_auth_form",
+        "parser_type": "CUSTOM_EXTRACTION_PROCESSOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id4>"
+    },
+    "classifier": {
+        "labels": {
+            "goog-packaged-solution": "prior-authorization"
+        },
+        "location": "us",
+        "parser_name": "classifier",
+        "parser_type": "CUSTOM_CLASSIFICATION_PROCESSOR",
+        "processor_id": "projects/$PROJECT_ID/locations/us/processors/$<docai-processor-id5>"
+    }
+}
