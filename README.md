@@ -1,6 +1,6 @@
-# Document Intake Accelerator
+# Claims Data Activator
 
-> A pre-packaged and customizable solution to accelerate the development of end-to-end document processing workflow incorporating Document AI parsers and other GCP products (Firestore, BigQuery, GKE, etc). The goal is to accelerate the development efforts in document workflow with many ready-to-use components.
+> A pre-packaged and customizable solution to accelerate the development of end-to-end document processing workflow incorporating Document AI parsers and other GCP products (Firestore, BigQuery, GKE, Healthcare FHIR API, etc). The goal is to accelerate the development efforts in document workflow with many ready-to-use components.
 
 ## Key features
 - End-to-end workflow management: document classification, extraction, validation, profile matching and Human-in-the-loop review.
@@ -53,9 +53,21 @@ gcloud auth application-default set-quota-project $PROJECT_ID
 
 ### GCP Organization policy
 
-Run the following commands to update Organization policies (Required for managed environments such as Argolis):
+Try setting org id with the following command tested on Google Cloud SDK 415.0.0
+``` bash
+ORGANIZATION_ID=$(gcloud projects get-ancestors $PROJECT_ID | grep 'organization' | cut -f1 -d' ')
+
+echo $ORGANIZATION_ID
 ```
-ORGANIZATION_ID=$(gcloud organizations list --format="value(name)")
+If the command doesn't set the org id, try the following command for earlier version of Google Cloud SDK.
+
+``` bash
+
+ORGANIZATION_ID=$(gcloud projects get-ancestors $PROJECT_ID | grep -B 1 'organization'| grep '^\ID.' | cut -f2 -d' ')
+```
+Run the following commands to update Organization policies (Required for managed environments such as Argolis):
+
+``` bash
 gcloud resource-manager org-policies disable-enforce constraints/compute.requireOsLogin --organization=$ORGANIZATION_ID
 gcloud resource-manager org-policies delete constraints/compute.vmExternalIpAccess --organization=$ORGANIZATION_ID
 gcloud resource-manager org-policies delete constraints/compute.requireShieldedVm --organization=$ORGANIZATION_ID

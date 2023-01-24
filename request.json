@@ -1,0 +1,19 @@
+{
+    "inputDocuments": {
+        "gcsDocuments": {
+            "documents": [
+                {
+                    "gcsUri": "gs://dp-cda-engine-pa-forms/demo/form.pdf",
+                    "mimeType": "application/pdf"
+                }
+            ]
+        }
+    },
+    "documentOutputConfig": {
+        "gcsOutputConfig": {
+          "gcsUri": "gs://dp-cda-engine-pa-forms/demo/out/",
+          "fieldMask": "Date:, Name:, DOB:, Zip:, State:, Address:, City:"
+        }
+      },
+      "skipHumanReview": true
+}
