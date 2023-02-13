@@ -102,17 +102,19 @@ const docclasstype=[
 // }
 // }
 
-
+'use strict';
+const config = require('../config');
 const {Storage} = require('@google-cloud/storage');
-const downloadAsJson = async (bucket, path) => {
+
+async function loadJsonConfig(bucketname, filename) {
     const file = await new Storage()
-        .bucket(bucket)
-        .file(path)
+        .bucket(bucketname)
+        .file(filename)
         .download();
     return JSON.parse(file[0].toString('utf8'));
 }
 
-const json = downloadAsJson(process.env.REACT_APP_CONFIG_BUCKET, "document_types_config.json")
+const json = loadJsonConfig(config.get("CONFIG_BUCKET"), "document_types_config.json")
 
 console.log(json);
 

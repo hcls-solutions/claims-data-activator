@@ -19,7 +19,7 @@ import os
 This code is Used to check the approval status of a document
 depending on the 3 different scores
 """
-from common.config import STATUS_APPROVED, STATUS_REVIEW, STATUS_REJECTED, STATUS_PENDING, STATUS_ERROR, EXTRACTION_CONFIDENCE_THRESHOLD
+from common.config import STATUS_APPROVED, STATUS_REVIEW, STATUS_REJECTED, STATUS_PENDING, STATUS_ERROR, get_extraction_confidence_threshold
 from common.autoapproval_config import AUTO_APPROVAL_MAPPING
 from common.utils.logging_handler import Logger
 
@@ -37,8 +37,6 @@ def get_autoapproval_status(validation_score, extraction_score, matching_score,
   status : Accept/Reject or Review
   flag : Yes or no
   """
-  print(f"auto-approval EXTRACTION_CONFIDENCE_THRESHOLD = {os.environ.get('EXTRACTION_CONFIDENCE_THRESHOLD')}")
-
   def check_scores():
     return (validation_score > v_limit or v_limit == 0) and \
       extraction_score > e_limit and \
@@ -51,12 +49,13 @@ def get_autoapproval_status(validation_score, extraction_score, matching_score,
               f"DocumentLabel:{document_label}, DocumentType:{document_type}")
   flag = "no"
 
+  extraction_confidence_threshold = get_extraction_confidence_threshold()
   if document_label not in data.keys():
     status = STATUS_REVIEW
     # Use Global Extraction Score
-    print(f"Auto-approval is not configured for {document_label}, using EXTRACTION_CONFIDENCE_THRESHOLD={EXTRACTION_CONFIDENCE_THRESHOLD}")
+    print(f"Auto-approval is not configured for {document_label}, using extraction_confidence_threshold={extraction_confidence_threshold}")
 
-    if extraction_score > EXTRACTION_CONFIDENCE_THRESHOLD:
+    if extraction_score > extraction_confidence_threshold:
       flag = "yes"
       status = STATUS_APPROVED
 
@@ -74,7 +73,7 @@ def get_autoapproval_status(validation_score, extraction_score, matching_score,
     for i in data[document_label]:
       print(f"get_autoapproval_status i={i}, data[document_label][i]={data[document_label][i]}")
       v_limit = data[document_label][i].get("Validation_Score", 0)
-      e_limit = data[document_label][i].get("Extraction_Score", EXTRACTION_CONFIDENCE_THRESHOLD)
+      e_limit = data[document_label][i].get("Extraction_Score", extraction_confidence_threshold)
       m_limit = data[document_label][i].get("Matching_Score", 0)
       print(f"Expected Limits are: v_limit={v_limit}, e_limit={e_limit}, m_limit={m_limit}")
 

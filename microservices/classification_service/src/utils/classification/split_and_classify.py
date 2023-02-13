@@ -25,8 +25,8 @@ from google.cloud import documentai_v1 as documentai
 import sys
 from os.path import basename
 from common.config import get_parser_config
-from common.config import CLASSIFIER, CLASSIFICATION_CONFIDENCE_THRESHOLD, \
-  CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS
+from common.config import CLASSIFIER, get_classification_confidence_threshold, \
+  get_classification_default_label
 from common.utils.logging_handler import Logger
 
 CLASSIFICATION_UNDETECTABLE = "unclassified"
@@ -151,15 +151,16 @@ class DocClassifier:
       Logger.error(e)
 
       # We will classify all documents as Claim (demo) Right Now when classifier not set
-      Logger.warning(f"Falling back on the default class {CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS}")
-      predicted_class = CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS
+      classification_default_class = get_classification_default_label()
+      Logger.warning(f"Falling back on the default class {classification_default_class}")
+      predicted_class = classification_default_class
       predicted_score = 1.0
 
     Logger.info(f"Classification results in predicted_class={predicted_class}, predicted_score={predicted_score} for case_id={self.case_id}  uid={self.uid} gcs_url={self.pdf_path}")
     # If confidence is greater than the threshold then it's a valid doc
-    if predicted_score < CLASSIFICATION_CONFIDENCE_THRESHOLD:
-      Logger.warning(f"Classifier could not pass the Classification Confidence threshhold, falling back on the default class {CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS}")
-      predicted_class = CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS
+    if predicted_score < get_classification_confidence_threshold():
+      Logger.warning(f"Classifier could not pass the Classification Confidence threshold, falling back on the default class {classification_default_class}")
+      predicted_class = classification_default_class
 
     output = {
         'case_id': self.case_id,

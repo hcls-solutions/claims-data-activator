@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from common.utils.helper import split_uri_2_bucket_prefix
+import time
 from google.cloud import storage
 from common.utils.logging_handler import Logger
 """
@@ -61,15 +61,6 @@ PATH_TEMPLATE = f"gs://{PROJECT_ID}/Validation/templates.json"
 BIGQUERY_DB = "validation.validation_table"
 VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 
-# ========= Classification =======================
-#Prediction Confidence threshold for the classifier to reject any prediction
-#less than the threshold value.
-CLASSIFICATION_CONFIDENCE_THRESHOLD = float(os.environ.get("CLASSIFICATION_CONFIDENCE_THRESHOLD", 0.85))
-
-# Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
-EXTRACTION_CONFIDENCE_THRESHOLD = float(os.environ.get("EXTRACTION_CONFIDENCE_THRESHOLD", 0.85))
-
-CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS = "Generic"
 CLASSIFIER = "classifier"
 CONFIG_BUCKET = os.environ.get("CONFIG_BUCKET")
 
@@ -97,9 +88,13 @@ def load_config(bucketname, filename):
 
 
 def get_config(config_name):
+  start_time = time.time()
   config = load_config(CONFIG_BUCKET, config_name)
   Logger.info(f"{config_name}={config}")
   assert config, f"Unable to locate '{config_name} or incorrect JSON file'"
+  process_time = time.time() - start_time
+  time_elapsed = round(process_time * 1000)
+  Logger.info(f"{get_config} Time elapsed: {str(time_elapsed)} ms")
   return config
 
 
@@ -119,7 +114,26 @@ def get_docai_settings():
   return get_config("settings_config.json")
 
 
+# Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
+def get_extraction_confidence_threshold():
+  settings = get_docai_settings()
+  return float(settings.get("extraction_confidence_threshold", 0.85))
+
+
+#Prediction Confidence threshold for the classifier to reject any prediction
+#less than the threshold value.
+def get_classification_confidence_threshold():
+  settings = get_docai_settings()
+  return float(settings.get("classification_confidence_threshold", 0.85))
+
+
+def get_classification_default_label():
+  settings = get_docai_settings()
+  return float(settings.get("classification_default_label"))
+
+
 DOCUMENTS_TYPE_CONFIG = get_document_types_config()
+
 
 APPLICATION_FORM_DN = "Application Form"
 APPLICATION_FORM = "application_form"

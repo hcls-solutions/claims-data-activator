@@ -1,6 +1,6 @@
 {
-  "document_extraction_threshold": 0.85,
-  "field_extraction_threshold": 0.40,
+  "extraction_confidence_threshold": 0.85,
   "classification_confidence_threshold": 0.85,
+  "field_extraction_confidence_threshold": 0.40,
   "classification_default_label" : "Generic"
 }

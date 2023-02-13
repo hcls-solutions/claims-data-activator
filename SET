@@ -14,8 +14,7 @@ export TF_VAR_config_bucket="${PROJECT_ID}-config"
 
 export CONFIG_BUCKET=${TF_VAR_config_bucket}
 
-export CLASSIFICATION_CONFIDENCE_THRESHOLD="0.85"
-export EXTRACTION_CONFIDENCE_THRESHOLD="0.85"
+
 
 export DEBUG=True
 
