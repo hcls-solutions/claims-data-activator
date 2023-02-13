@@ -24,8 +24,7 @@ import traceback
 from fastapi import APIRouter, HTTPException
 
 from common.utils.logging_handler import Logger
-from common.config import DOC_CLASS_STANDARDISATION_MAP,\
-  APPLICATION_FORMS,SUPPORTING_DOCS
+from common.config import get_document_class_by_label
 from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR
 from utils.classification.split_and_classify import DocClassifier
 
@@ -141,25 +140,7 @@ async def classifiction(case_id: str, uid: str, gcs_url: str):
               status_code=500, detail="Failed to update document status")
         raise HTTPException(status_code=422, detail="Invalid Document")
 
-      doc_type = None
-      if doc_prediction_result["predicted_class"] in DOC_CLASS_STANDARDISATION_MAP.keys():
-        doc_class = DOC_CLASS_STANDARDISATION_MAP[
-          doc_prediction_result["predicted_class"]]
-      else:
-        doc_class = doc_prediction_result["predicted_class"]
-
-      if doc_class in APPLICATION_FORMS:
-        doc_type = "application_form"
-      elif doc_class in SUPPORTING_DOCS:
-        doc_type = "supporting_documents"
-      else:
-        # For development, allow each undefined form to be trwated as supporting
-        doc_type = "supporting_documents"
-        Logger.warning(f"Doc class {doc_class} is not a valid doc class, need to be configured as APPLICATION_FORM or SUPPORTING_DOCS. Assigning SUPPORTING_DOCS for now")
-        # Logger.error(f"Doc class {doc_class} is not a valid doc class")
-        # update_classification_status(case_id, uid, STATUS_ERROR)
-        # raise HTTPException(
-        #     status_code=422, detail="Unidentified document class found")
+      doc_class, doc_type = get_document_class_by_label(doc_prediction_result["predicted_class"])
 
       SUCCESS_RESPONSE["case_id"] = doc_prediction_result["case_id"]
       SUCCESS_RESPONSE["uid"] = uid

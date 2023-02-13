@@ -15,7 +15,7 @@ limitations under the License.
 """
 from common.utils.helper import split_uri_2_bucket_prefix
 from google.cloud import storage
-
+from common.utils.logging_handler import Logger
 """
 Config module to setup common environment
 """
@@ -23,30 +23,6 @@ Config module to setup common environment
 import os, json
 # API clients
 gcs = None
-
-
-def load_config(filename):
-  if filename.startswith("gs://"):
-    return load_from_gcs(filename)
-
-  json_file = open(os.path.join(os.path.dirname(__file__), ".", filename))
-  return json.load(json_file)
-
-
-def load_from_gcs(gcs_uri):
-  global gcs
-  if not gcs:
-    gcs = storage.Client()
-
-  try:
-    bucket_name, prefix = split_uri_2_bucket_prefix(gcs_uri)
-    bucket = gcs.get_bucket(bucket_name)
-    blob = bucket.get_blob(prefix)
-    data = json.loads(blob.download_as_text(encoding="utf-8"))
-    return data
-  except Exception as e:
-    print(f"Error: get_image_from_GCS: while obtaining file from GCS {e}")
-    return None
 
 
 # ========= Overall =============================
@@ -59,9 +35,7 @@ assert PROJECT_ID, "Env var PROJECT_ID is not set."
 REGION = "us-central1"
 PROCESS_TIMEOUT_SECONDS = 600
 
-#List of application forms and supporting documents
-APPLICATION_FORMS = ["package_form", "bsc_package_form"] # Not being used OOTB
-SUPPORTING_DOCS = ["claims_form", "prior_auth_form", "bsc_pa_form"]
+
 # Doc approval status, will reflect on the Frontend app.
 STATUS_APPROVED = "Approved"
 STATUS_REVIEW = "Need Review"
@@ -95,41 +69,85 @@ CLASSIFICATION_CONFIDENCE_THRESHOLD = float(os.environ.get("CLASSIFICATION_CONFI
 # Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
 EXTRACTION_CONFIDENCE_THRESHOLD = float(os.environ.get("EXTRACTION_CONFIDENCE_THRESHOLD", 0.85))
 
-
 CLASSIFICATION_UNDETECTABLE_DEFAULT_CLASS = "Generic"
-
-# Map to standardise predicted document class from classifier to
-DOC_CLASS_STANDARDISATION_MAP = {
-    "Generic": "generic_form",
-    "Claim": "claims_form",
-    "Prior_Auth": "prior_auth_form",
-}
-
 CLASSIFIER = "classifier"
+CONFIG_BUCKET = os.environ.get("CONFIG_BUCKET")
 
-# ========= DocAI Parsers =======================
 
-# To add parsers, edit /terraform/enviroments/dev/main.tf
-PARSER_CONFIG_FILE = os.environ.get("PARSER_CONFIG_FILE", "parser_config.json")
-DOCAI_ENTITY_MAPPING_FILE = os.environ.get("DOCAI_ENTITY_MAPPING_FILE", "docai_entity_mapping.json")
+def load_config(bucketname, filename):
+  Logger.info(f"load_config with bucket={bucketname}, filename={filename}")
+  global gcs
+  if not gcs:
+    gcs = storage.Client()
+
+  try:
+    if bucketname and gcs.get_bucket(bucketname).exists():
+      bucket = gcs.get_bucket(bucketname)
+      blob = bucket.blob(filename)
+      if blob.exists():
+        data = json.loads(blob.download_as_text(encoding="utf-8"))
+        return data
+  except Exception as e:
+    Logger.error(f"Error: while obtaining file from GCS gs://{bucketname}/{filename} {e}")
+
+  # Fall-back to local file
+  Logger.warning(f"Using local {filename}")
+  json_file = open(os.path.join(os.path.dirname(__file__), "config", filename))
+  return json.load(json_file)
+
+
+def get_config(config_name):
+  config = load_config(CONFIG_BUCKET, config_name)
+  Logger.info(f"{config_name}={config}")
+  assert config, f"Unable to locate '{config_name} or incorrect JSON file'"
+  return config
 
 
 def get_parser_config():
-  assert PARSER_CONFIG_FILE, f"PARSER_CONFIG_FILE is not set '{PARSER_CONFIG_FILE}'"
-  print(f"get_parser_config using PARSER_CONFIG_FILE={PARSER_CONFIG_FILE}")
-  config = load_config(PARSER_CONFIG_FILE)
-  print(f"parser_config_file={PARSER_CONFIG_FILE}")
-  assert config, f"Unable to locate '{PARSER_CONFIG_FILE} or incorrect JSON file'"
-  return config
+  return get_config("parser_config.json")
+
+
+def get_document_types_config():
+  return get_config("document_types_config.json")
 
 
 def get_docai_entity_mapping():
-  assert DOCAI_ENTITY_MAPPING_FILE, f"DOCAI_ENTITY_MAPPING_FILE is not set '{DOCAI_ENTITY_MAPPING_FILE}'"
-  print(f"get_docai_entity_mapping using DOCAI_ENTITY_MAPPING_FILE={DOCAI_ENTITY_MAPPING_FILE}")
-  config = load_config(DOCAI_ENTITY_MAPPING_FILE)
-  print(f"get_docai_entity_mapping={DOCAI_ENTITY_MAPPING_FILE}")
-  assert config, f"Unable to locate '{DOCAI_ENTITY_MAPPING_FILE} or incorrect JSON file'"
-  return config
+  return get_config("docai_entity_mapping.json")
+
+
+def get_docai_settings():
+  return get_config("settings_config.json")
+
+
+DOCUMENTS_TYPE_CONFIG = get_document_types_config()
+
+APPLICATION_FORM_DN = "Application Form"
+APPLICATION_FORM = "application_form"
+SUPPORTING_DOC = "supporting_documents"
+SUPPORTING_DOC_DN = "Supporting Documents"
+DOC_TYPE = {
+    APPLICATION_FORM: APPLICATION_FORM_DN,
+    SUPPORTING_DOC: SUPPORTING_DOC
+}
+# APPLICATION_FORMS = [k for k, v in DOCUMENTS_TYPE_CONFIG.items() if v.get("doc_type") == APPLICATION_FORM]
+# Logger.info(f"APPLICATION_FORMS={APPLICATION_FORMS}")
+# SUPPORTING_DOCS = [k for k, v in DOCUMENTS_TYPE_CONFIG.items() if v.get("doc_type") == SUPPORTING_DOC]
+# Logger.info(f"SUPPORTING_DOCS={SUPPORTING_DOCS}")
+
+
+def get_document_class_by_label(label_name):
+  for k, v in get_document_types_config():
+    if v.get("classifier_label") == label_name:
+      doc_type = v.get("doc_type")
+      if not doc_type or doc_type not in DOC_TYPE.keys():
+        Logger.warning(f"Doc class {k} does not have a valid doc_type (should be in {DOC_TYPE.keys()}). Assigning {SUPPORTING_DOC} for now")
+        doc_type = SUPPORTING_DOC
+      return k, doc_type
+
+  Logger.warning(f"{label_name} is not a valid classifier label listed in {DOCUMENTS_TYPE_CONFIG}.")
+
+  return label_name, SUPPORTING_DOC
+
 
 # ========= HITL and Frontend UI =======================
 

@@ -347,39 +347,10 @@ resource "null_resource" "validation_rules" {
     google_storage_bucket.default
   ]
   provisioner "local-exec" {
-    command = "gsutil -m cp ../../../common/src/common/validation_rules/* gs://${var.project_id}/Validation"
+    command = "gsutil -m cp ../../../common/src/common/validation_rules/* gs://${google_storage_bucket.default.name}/Validation"
   }
 }
 
-# Copying pa-forms forms into GCS bucket.
-resource "null_resource" "pa-forms" {
-  depends_on = [
-    google_storage_bucket.document-load
-  ]
-  provisioner "local-exec" {
-    command = "gsutil -m cp ../../../sample_data/pa-forms/* gs://${local.forms_gcs_path}/pa-forms"
-  }
-}
-
-# Copying pa-forms forms into GCS bucket.
-resource "null_resource" "pa-forms-test" {
-  depends_on = [
-    google_storage_bucket.document-load
-  ]
-  provisioner "local-exec" {
-    command = "gsutil -m cp ../../../sample_data/test/pa-form-42.pdf gs://${local.forms_gcs_path}/test/"
-  }
-}
-
-# Copying sample into GCS bucket.
-resource "null_resource" "pa-forms-demo" {
-  depends_on = [
-    google_storage_bucket.document-load
-  ]
-  provisioner "local-exec" {
-    command = "gsutil -m cp ../../../sample_data/test/form.pdf gs://${local.forms_gcs_path}/demo/"
-  }
-}
 
 # Copying sample data into GCS bucket.
 resource "null_resource" "sample-data" {
@@ -387,17 +358,17 @@ resource "null_resource" "sample-data" {
     google_storage_bucket.document-load
   ]
   provisioner "local-exec" {
-    command = "gsutil -m  cp -r ../../../sample_data gs://${google_storage_bucket.default.name}/"
+    command = "gsutil -m  cp -r ../../../sample_data gs://${google_storage_bucket.document-load.name}/"
   }
 }
 
-# Copying Configuration for Mapping.
-resource "null_resource" "pa-docai-entity-mapping" {
+# Copying Configurations.
+resource "null_resource" "pa-config" {
   depends_on = [
-    google_storage_bucket.default
+    google_storage_bucket.pa-config
   ]
   provisioner "local-exec" {
-    command = "gsutil cp ../../../common/src/common/docai_entity_mapping.json gs://${local.config_bucket_name}/docai_entity_mapping.json"
+    command = "gsutil -m cp -r ../../../common/src/common/config gs://${google_storage_bucket.pa-config.name}/"
   }
 }
 

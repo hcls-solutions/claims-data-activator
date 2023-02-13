@@ -5,7 +5,7 @@ FROM node:17-alpine as builder
 COPY package.json package-lock.json ./
 
 # Install the dependencies and make the folder
-RUN npm install && mkdir /react-ui && mv ./node_modules ./react-ui
+RUN npm install && npm install @google-cloud/storage && npm install util && mkdir /react-ui && mv ./node_modules ./react-ui
 
 WORKDIR /react-ui
 

@@ -49,7 +49,7 @@ subscription=$(terraform output -json eventarc_subscription)
 subscription_name=$(echo "$subscription" | tr -d '"' | sed 's:.*/::')
 gcloud alpha pubsub subscriptions update "$subscription_name" --ack-deadline=120 --project $PROJECT_ID
 
-gsutil cp "${DIR}/common/src/common/parser_config.json" "gs://${TF_VAR_config_bucket}/parser_config.json"
+gsutil cp "${DIR}/common/src/common/config/parser_config.json" "gs://${TF_VAR_config_bucket}/parser_config.json"
 
 # TODO Add instructions on Cloud DNS Setup for API_DOMAIN
 

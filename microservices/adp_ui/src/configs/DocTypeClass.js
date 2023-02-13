@@ -15,6 +15,17 @@
  *
  */
 
+// TODO dynamically generate docclasstype using JSON file
+    // Try to get file from GCS: gs://${process.env.REACT_APP_CONFIG_BUCKET}/document_types_config.json
+    // Fall back to the local file: config/document_types_config.json
+    // See Python implementation in get_document_types_config() in common/config.py
+
+
+    // new JSON to docclasstype mappings:
+        // value:     document_types_config.key
+        // doc_type:  doc_type   (but need to convert "supporting_documents"=> "Supporting Documents";  "application_form" => "Application Form"
+        // doc_class: display_name
+
 const docclasstype=[
 
 // {
@@ -58,6 +69,52 @@ const docclasstype=[
     'doc_class': 'Prior-Authorization Texas Form'
 },
 ]
+
+// The New json FORMAT for each document_class
+// {
+//     "pay_stub": {
+//         "doc_type":"supporting_documents",
+//         "display_name": "Pay Stub",
+//         "classifier_label": "pay_stub"
+// },
+//     "claims_form": {
+//         "doc_type":"supporting_documents",
+//         "display_name": "Claims Form",
+//         "classifier_label": "claims_form",
+//         "parser": "claims_form"
+// },
+//     "utility_bill": {
+//         "doc_type":"supporting_documents",
+//         "display_name": "Utility Bill",
+//         "classifier_label": "utility_bill"
+// },
+//     "driver_license": {
+//         "doc_type":"supporting_documents",
+//         "doc_class": "Driver License",
+//         "classifier_label": "DL",
+//         "parser": "driver_license"
+// },
+//     "unemployment_form": {
+//         "doc_type":"application_form",
+//         "display_name": "Unemployment Form",
+//         "classifier_label": "UE",
+//         "parser": "unemployment_form"
+// }
+// }
+
+
+const {Storage} = require('@google-cloud/storage');
+const downloadAsJson = async (bucket, path) => {
+    const file = await new Storage()
+        .bucket(bucket)
+        .file(path)
+        .download();
+    return JSON.parse(file[0].toString('utf8'));
+}
+
+const json = downloadAsJson(process.env.REACT_APP_CONFIG_BUCKET, "document_types_config.json")
+
+console.log(json);
 
 const sorting=docclasstype.sort(function (a, b) {
     return a.doc_type.localeCompare(b.doc_type) || a.doc_class.localeCompare(b.doc_class);

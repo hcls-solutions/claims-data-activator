@@ -12,8 +12,7 @@ export TF_BUCKET_NAME="${PROJECT_ID}-tfstate"
 export TF_BUCKET_LOCATION="us"
 export TF_VAR_config_bucket="${PROJECT_ID}-config"
 
-export PARSER_CONFIG_FILE="gs://${TF_VAR_config_bucket}/parser_config.json"
-export DOCAI_ENTITY_MAPPING_FILE="gs://${TF_VAR_config_bucket}/docai_entity_mapping.json"
+export CONFIG_BUCKET=${TF_VAR_config_bucket}
 
 export CLASSIFICATION_CONFIDENCE_THRESHOLD="0.85"
 export EXTRACTION_CONFIDENCE_THRESHOLD="0.85"
