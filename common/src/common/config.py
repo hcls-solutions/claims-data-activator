@@ -135,13 +135,13 @@ def get_classification_default_label():
 DOCUMENTS_TYPE_CONFIG = get_document_types_config()
 
 
-APPLICATION_FORM_DN = "Application Form"
+APPLICATION_FORM_DISPLAY_NAME = "Application Form"
 APPLICATION_FORM = "application_form"
 SUPPORTING_DOC = "supporting_documents"
-SUPPORTING_DOC_DN = "Supporting Documents"
-DOC_TYPE = {
-    APPLICATION_FORM: APPLICATION_FORM_DN,
-    SUPPORTING_DOC: SUPPORTING_DOC
+SUPPORTING_DOC_DISPLAY_NAME = "Supporting Documents"
+SUPPORTED_DOC_TYPES = {
+    APPLICATION_FORM: APPLICATION_FORM_DISPLAY_NAME,
+    SUPPORTING_DOC: SUPPORTING_DOC_DISPLAY_NAME
 }
 # APPLICATION_FORMS = [k for k, v in DOCUMENTS_TYPE_CONFIG.items() if v.get("doc_type") == APPLICATION_FORM]
 # Logger.info(f"APPLICATION_FORMS={APPLICATION_FORMS}")
@@ -150,11 +150,11 @@ DOC_TYPE = {
 
 
 def get_document_class_by_label(label_name):
-  for k, v in get_document_types_config():
+  for k, v in get_document_types_config().items():
     if v.get("classifier_label") == label_name:
       doc_type = v.get("doc_type")
-      if not doc_type or doc_type not in DOC_TYPE.keys():
-        Logger.warning(f"Doc class {k} does not have a valid doc_type (should be in {DOC_TYPE.keys()}). Assigning {SUPPORTING_DOC} for now")
+      if not doc_type or doc_type not in SUPPORTED_DOC_TYPES.keys():
+        Logger.warning(f"Doc class {k} does not have a valid doc_type (should be in {SUPPORTED_DOC_TYPES.keys()}). Assigning {SUPPORTING_DOC} for now")
         doc_type = SUPPORTING_DOC
       return k, doc_type
 
