@@ -63,9 +63,13 @@ VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 
 CLASSIFIER = "classifier"
 CONFIG_BUCKET = os.environ.get("CONFIG_BUCKET")
+CONFIG_FILE_NAME = "config.json"
 
 
 def load_config(bucketname, filename):
+  # Todo add optimization and check for the latest timestamp changed
+  # Reload only if file changes detected
+  # Currently re-loading each time
   Logger.info(f"load_config with bucket={bucketname}, filename={filename}")
   global gcs
   if not gcs:
@@ -78,46 +82,60 @@ def load_config(bucketname, filename):
       if blob.exists():
         data = json.loads(blob.download_as_text(encoding="utf-8"))
         return data
+      else:
+        print(f"___________file does not exist {filename} _____")
+        print(f"___________gs://{bucketname}/{filename}  _____")
+    else:
+      print("___________bucket does not exist _____")
   except Exception as e:
     Logger.error(f"Error: while obtaining file from GCS gs://{bucketname}/{filename} {e}")
+    return None
 
   # Fall-back to local file
-  Logger.warning(f"Using local {filename}")
+  Logger.warning(f"Warning: Using local {filename}")
   json_file = open(os.path.join(os.path.dirname(__file__), "config", filename))
   return json.load(json_file)
 
 
 def get_config(config_name):
   start_time = time.time()
-  config = load_config(CONFIG_BUCKET, config_name)
-  Logger.info(f"{config_name}={config}")
+  config = load_config(CONFIG_BUCKET, CONFIG_FILE_NAME)
   assert config, f"Unable to locate '{config_name} or incorrect JSON file'"
+  select_config = config.get(config_name)
+  Logger.info(f"{config_name}={select_config}")
+
   process_time = time.time() - start_time
   time_elapsed = round(process_time * 1000)
-  Logger.info(f"{get_config} Time elapsed: {str(time_elapsed)} ms")
-  return config
+  Logger.info(f"Retrieving {config_name} took : {str(time_elapsed)} ms")
+  return select_config
 
 
 def get_parser_config():
-  return get_config("parser_config.json")
+  return get_config("parser_config")
 
 
 def get_document_types_config():
-  return get_config("document_types_config.json")
+  return get_config("document_types_config")
 
 
 def get_docai_entity_mapping():
-  return get_config("docai_entity_mapping.json")
+  return get_config("docai_entity_mapping")
 
 
 def get_docai_settings():
-  return get_config("settings_config.json")
+  return get_config("settings_config")
 
 
 # Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
 def get_extraction_confidence_threshold():
   settings = get_docai_settings()
   return float(settings.get("extraction_confidence_threshold", 0.85))
+
+
+# Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
+def get_extraction_confidence_threshold_per_field():
+  settings = get_docai_settings()
+  return float(settings.get("field_extraction_confidence_threshold", 0.60))
 
 
 #Prediction Confidence threshold for the classifier to reject any prediction

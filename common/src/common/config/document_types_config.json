@@ -2,7 +2,7 @@
   "generic_form": {
     "doc_type":"supporting_documents",
     "display_name": "Generic Form",
-    "parser": "bsc_package_form",
+    "parser": "claims_form",
     "classifier_label": "Generic"
   },
   "prior_auth_form": {

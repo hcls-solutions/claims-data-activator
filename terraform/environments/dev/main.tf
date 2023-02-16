@@ -271,6 +271,7 @@ module "docai" {
     //    unemployment_form = "FORM_PARSER_PROCESSOR"
     claims_form     = "FORM_PARSER_PROCESSOR"
     prior_auth_form = "CUSTOM_EXTRACTION_PROCESSOR"
+    classifier      = "CUSTOM_CLASSIFICATION_PROCESSOR"
   }
 }
 
@@ -281,7 +282,7 @@ resource "google_storage_bucket" "default" {
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  force_destroy = true
+  force_destroy               = true
   labels = {
     goog-packaged-solution = "prior-authorization"
   }
@@ -292,7 +293,7 @@ resource "google_storage_bucket" "document-upload" {
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  force_destroy = true
+  force_destroy               = true
   labels = {
     goog-packaged-solution = "prior-authorization"
   }
@@ -305,7 +306,7 @@ resource "google_storage_bucket" "document-load" {
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  force_destroy = true
+  force_destroy               = true
   labels = {
     goog-packaged-solution = "prior-authorization"
   }
@@ -317,7 +318,7 @@ resource "google_storage_bucket" "pa-config" {
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  force_destroy = true
+  force_destroy               = true
   versioning {
     enabled = true
   }
@@ -332,7 +333,7 @@ resource "google_storage_bucket" "docai-output" {
   location                    = local.multiregion
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  force_destroy = true
+  force_destroy               = true
   labels = {
     goog-packaged-solution = "prior-authorization"
   }
