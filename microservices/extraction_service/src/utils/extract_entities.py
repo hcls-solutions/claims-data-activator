@@ -502,13 +502,17 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
     #     json.dump(final_extracted_entities, outfile, indent=4)
 
     # extraction accuracy calculation
-    document_extraction_confidence, extraction_status = \
+    document_extraction_confidence, extraction_status, extraction_field_min_score = \
       extraction_accuracy_calc(final_extracted_entities, flag)
     # print(final_extracted_entities)
     # print(document_extraction_confidence)
-    Logger.info(f"Extraction completed for this document:{doc_class}")
+    Logger.info(f"Extraction completed for {doc_class} {gcs_doc_path}:  "
+                f"document_extraction_confidence={document_extraction_confidence},"
+                f" extraction_status={extraction_status}, "
+                f"extraction_field_min_score={extraction_field_min_score}")
+
     return final_extracted_entities, \
-           document_extraction_confidence, extraction_status
+           document_extraction_confidence, extraction_status, extraction_field_min_score
   else:
     # Parser not available
     Logger.error(f"Parser not available for this document:{doc_class}")
