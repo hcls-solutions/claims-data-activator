@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: validation-service
+  name: config-service
+  labels:
+    app: config-service
 spec:
-  template:
-    spec:
-      containers:
-      - name: validation-service
-        image: validation-service
-        imagePullPolicy: Always
-        envFrom:
-        - configMapRef:
-            name: validation-env-vars
+  type: NodePort
+    #loadBalancerIP: 34.68.97.195
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: config-service

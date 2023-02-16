@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
-  name: validation-service
+  name: cpu-pod-scaling-config-service
 spec:
-  template:
-    spec:
-      containers:
-      - name: validation-service
-        image: validation-service
-        imagePullPolicy: Always
-        envFrom:
-        - configMapRef:
-            name: validation-env-vars
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: config-service
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    #resource:
+    #  name: memory
+    #  targetAverageValue: 500Mi
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60

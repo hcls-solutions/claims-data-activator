@@ -15,14 +15,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: validation-service
+  name: config-service
 spec:
   template:
     spec:
       containers:
-      - name: validation-service
-        image: validation-service
+      - name: config-service
+        image: config-service
         imagePullPolicy: Always
-        envFrom:
-        - configMapRef:
-            name: validation-env-vars
+        env:
+        - name: PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: config-env-vars
+              key: PROJECT_ID
+        - name: EXTERNAL_DATA_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: config-env-vars
+              key: EXTERNAL_DATA_PROJECT_ID
