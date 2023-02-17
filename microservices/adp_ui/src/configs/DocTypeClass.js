@@ -54,21 +54,21 @@ function fetchConfig(configServer) {
         fetch(configServer + "/config_service/v1/get_config?name=document_types_config").then(handleFetchErrors).then(r => r.json())
             .then(documentConfig => {
                 console.log("documentConfig", documentConfig);
-                //TODO load config into array
-                // Temp test
-                return [{
-                    doc_class: 'BSC Prior-Auth Form',
-                    doc_type: 'Supporting Documents',
-                    value: 'bsc_pa_form'
-                }, {
-                    doc_class: 'Generic Form Parser',
-                    doc_type: 'Supporting Documents',
-                    value: 'generic_form'
-                }, {
-                    doc_class: 'Prior-Authorization Texas Form',
-                    doc_type: 'Supporting Documents',
-                    value: 'prior_auth_form'
-                }];
+                let data = documentConfig['data']
+                var docs = []
+                console.log("data", data);
+                for(var key in data) {
+                    var docObj = {}
+                    docObj['value'] = key
+                    docObj['doc_type'] = data[key]['doc_type']
+                    docObj['doc_class'] = data[key]['display_name']
+                    docs[ key ] = docObj
+                    docs.push(docObj)
+
+                console.log("docs", docs)
+                }
+
+                return docs;
 
             })
             .catch(err => {
@@ -77,7 +77,10 @@ function fetchConfig(configServer) {
             });
     });
 }
+
 const docclasstype = fetchConfig(baseUrl)
+
+console.log(docclasstype);
 
 //New Code End here
 const sorting=docclasstype.sort(function (a, b) {
@@ -86,4 +89,4 @@ const sorting=docclasstype.sort(function (a, b) {
 
 console.log(sorting);
 
-export default sorting
+export default docclasstype
