@@ -15,113 +15,75 @@
  *
  */
 
-// TODO dynamically generate docclasstype using JSON file
-    // Try to get file from GCS: gs://${process.env.REACT_APP_CONFIG_BUCKET}/document_types_config.json
-    // Fall back to the local file: config/document_types_config.json
-    // See Python implementation in get_document_types_config() in common/config.py
+import "isomorphic-fetch";
 
-
-    // new JSON to docclasstype mappings:
-        // value:     document_types_config.key
-        // doc_type:  doc_type   (but need to convert "supporting_documents"=> "Supporting Documents";  "application_form" => "Application Form"
-        // doc_class: display_name
-
-const docclasstype=[
-
+// let docclasstype=[
 // {
-//     'value':'utility_bill',
+//     'value':'bsc_pa_form',
 //     'doc_type':'Supporting Documents',
-//     'doc_class': 'Utility Bill'
+//     'doc_class': 'BSC Prior-Auth Form'
 // },
 // {
-//     'value':'unemployment_form',
-//     'doc_type':'Application Form',
-//     'doc_class': 'Unemployment Form'
-// },
-// {
-//     'value':'claims_form',
+//     'value':'generic_form',
 //     'doc_type':'Supporting Documents',
-//     'doc_class': 'Claims Form'
+//     'doc_class': 'Generic Form Parser'
 // },
-{
-    'value':'bsc_pa_form',
-    'doc_type':'Supporting Documents',
-    'doc_class': 'BSC Prior-Auth Form'
-},
-{
-    'value':'generic_form',
-    'doc_type':'Supporting Documents',
-    'doc_class': 'Generic Form Parser'
-},
 // {
-//     'value':'pay_stub',
+//     'value':'prior_auth_form',
 //     'doc_type':'Supporting Documents',
-//     'doc_class': 'Pay Stub'
+//     'doc_class': 'Prior-Authorization Texas Form'
 // },
-// {
-//     'value':'driver_license',
-//     'doc_type':'Supporting Documents',
-//     'doc_class': 'Driver License'
-// },
-{
-    'value':'prior_auth_form',
-    'doc_type':'Supporting Documents',
-    'doc_class': 'Prior-Authorization Texas Form'
-},
-]
+// ]
 
-// The New json FORMAT for each document_class
-// {
-//     "pay_stub": {
-//         "doc_type":"supporting_documents",
-//         "display_name": "Pay Stub",
-//         "classifier_label": "pay_stub"
-// },
-//     "claims_form": {
-//         "doc_type":"supporting_documents",
-//         "display_name": "Claims Form",
-//         "classifier_label": "claims_form",
-//         "parser": "claims_form"
-// },
-//     "utility_bill": {
-//         "doc_type":"supporting_documents",
-//         "display_name": "Utility Bill",
-//         "classifier_label": "utility_bill"
-// },
-//     "driver_license": {
-//         "doc_type":"supporting_documents",
-//         "doc_class": "Driver License",
-//         "classifier_label": "DL",
-//         "parser": "driver_license"
-// },
-//     "unemployment_form": {
-//         "doc_type":"application_form",
-//         "display_name": "Unemployment Form",
-//         "classifier_label": "UE",
-//         "parser": "unemployment_form"
-// }
-// }
+// new Code Start Here
+let baseUrl = process.env.REACT_APP_BASE_URL;
+function fetchConfig(configServer) {
+    return new Promise(function(resolve, reject) {
+        console.log("fetchConfig from " + configServer);
 
-'use strict';
-const config = require('../config');
-const {Storage} = require('@google-cloud/storage');
+        function handleFetchErrors(response) {
+            if (!response.ok) {
+                let msg = "Failure when fetching Configurations";
+                let details = `${msg}: ${response.url}: the server responded with a status of ${response.status} (${response.statusText})`;
+                console.log(msg + ": errorClass: " + details);
+                reject(msg);
+            }
+            return response;
+        }
 
-async function loadJsonConfig(bucketname, filename) {
-    const file = await new Storage()
-        .bucket(bucketname)
-        .file(filename)
-        .download();
-    return JSON.parse(file[0].toString('utf8'));
+        fetch(configServer + "/config_service/v1/get_config?name=document_types_config").then(handleFetchErrors).then(r => r.json())
+            .then(documentConfig => {
+                console.log("documentConfig", documentConfig);
+                //TODO load config into array
+                // Temp test
+                return [{
+                    doc_class: 'BSC Prior-Auth Form',
+                    doc_type: 'Supporting Documents',
+                    value: 'bsc_pa_form'
+                }, {
+                    doc_class: 'Generic Form Parser',
+                    doc_type: 'Supporting Documents',
+                    value: 'generic_form'
+                }, {
+                    doc_class: 'Prior-Authorization Texas Form',
+                    doc_type: 'Supporting Documents',
+                    value: 'prior_auth_form'
+                }];
+
+            })
+            .catch(err => {
+                console.log("error doing fetch():" + err);
+                reject(err);
+            });
+    });
 }
+const docclasstype = fetchConfig(baseUrl)
 
-const json = loadJsonConfig(config.get("CONFIG_BUCKET"), "document_types_config.json")
-
-console.log(json);
-
+//New Code End here
 const sorting=docclasstype.sort(function (a, b) {
     return a.doc_type.localeCompare(b.doc_type) || a.doc_class.localeCompare(b.doc_class);
 });
 
 console.log(sorting);
 
-export default sorting;
+export default sorting
