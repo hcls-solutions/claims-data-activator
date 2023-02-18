@@ -288,6 +288,11 @@ pip3 install -r utils/requirements.tx
 > Please, note, that due to active StreamingBuffer, BigQuery can only be cleaned after a table has received no inserts for an extended interval of time (~ 90 minutes). Then the buffer is detached and DELETE statement is allowed.
 > For more details see [here](https://cloud.google.com/blog/products/bigquery/life-of-a-bigquery-streaming-insert) .
 
+# Configuration
+Config Service (used by adp ui):
+- http://$API_DOMAIN/config_service/v1/get_config?name=document_types_config
+- http://$API_DOMAIN/config_service/v1/get_config
+
 ## Deployment Troubleshoot
 
 ### Terraform Troubleshoot

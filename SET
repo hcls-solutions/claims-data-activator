@@ -8,6 +8,9 @@ export TF_LOG_PATH="$BASE_DIR"/tf.log
 export TF_VAR_api_domain=$API_DOMAIN
 
 export TF_VAR_project_id=$PROJECT_ID
+export TF_VAR_docai_project_id=${DOCAI_PROJECT_ID:PROJECT_ID}
+PROJECT_NUM=$(gcloud projects describe "$PROJECT_ID" --format='get(projectNumber)')
+
 export TF_BUCKET_NAME="${PROJECT_ID}-tfstate"
 export TF_BUCKET_LOCATION="us"
 export TF_VAR_config_bucket="${PROJECT_ID}-config"

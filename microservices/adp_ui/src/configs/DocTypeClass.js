@@ -17,25 +17,6 @@
 
 import "isomorphic-fetch";
 
-// let docclasstype=[
-// {
-//     'value':'bsc_pa_form',
-//     'doc_type':'Supporting Documents',
-//     'doc_class': 'BSC Prior-Auth Form'
-// },
-// {
-//     'value':'generic_form',
-//     'doc_type':'Supporting Documents',
-//     'doc_class': 'Generic Form Parser'
-// },
-// {
-//     'value':'prior_auth_form',
-//     'doc_type':'Supporting Documents',
-//     'doc_class': 'Prior-Authorization Texas Form'
-// },
-// ]
-
-// new Code Start Here
 let baseUrl = process.env.REACT_APP_BASE_URL;
 function fetchConfig(configServer) {
     return new Promise(function(resolve, reject) {
@@ -51,7 +32,7 @@ function fetchConfig(configServer) {
             return response;
         }
 
-        fetch(configServer + "/config_service/v1/get_config?name=document_types_config").then(handleFetchErrors).then(r => r.json())
+        resolve (fetch(configServer + "/config_service/v1/get_config?name=document_types_config").then(handleFetchErrors).then(r => r.json())
             .then(documentConfig => {
                 console.log("documentConfig", documentConfig);
                 let data = documentConfig['data']
@@ -60,8 +41,7 @@ function fetchConfig(configServer) {
                 for(var key in data) {
                     var docObj = {}
                     docObj['value'] = key
-                    docObj['doc_type'] = data[key]['doc_type']
-                    docObj['doc_class'] = data[key]['display_name']
+                    docObj['display_name'] = data[key]['display_name']
                     docs[ key ] = docObj
                     docs.push(docObj)
 
@@ -74,19 +54,11 @@ function fetchConfig(configServer) {
             .catch(err => {
                 console.log("error doing fetch():" + err);
                 reject(err);
-            });
+            }));
     });
 }
 
-const docclasstype = fetchConfig(baseUrl)
+const sorting = fetchConfig(baseUrl);
 
-console.log(docclasstype);
 
-//New Code End here
-const sorting=docclasstype.sort(function (a, b) {
-    return a.doc_type.localeCompare(b.doc_type) || a.doc_class.localeCompare(b.doc_class);
-});
-
-console.log(sorting);
-
-export default docclasstype
+export default sorting

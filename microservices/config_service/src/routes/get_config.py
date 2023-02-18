@@ -27,7 +27,7 @@ FAILED_RESPONSE = {"status": STATUS_ERROR}
 
 
 @router.get("/get_config")
-async def get_config_by_name(name):
+async def get_config_by_name(name=None):
   """ reports document_types_config
           Returns:
               200 : fetches all the data from database
@@ -50,3 +50,4 @@ async def get_config_by_name(name):
     Logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in get_document_types_config") from e
+

@@ -59,7 +59,10 @@ function  Classified() {
     optionsSorted = options.then((res) => {
       optionsSorted=res;
       dropDown = document.getElementById('dropdown-basic-button');
-      dropDown.appendChild(new Option("my label 1", "my value 1"))
+      res.forEach(item => {
+          dropDown.appendChild(new Option(item["display_name"] , item["value"]));
+          console.log("drop-down:", item["display_name"], item["value"])
+      })
       console.log("optionsSorted", optionsSorted)
     });
 
@@ -173,7 +176,7 @@ function  Classified() {
                   <label className="labelBold"> Choose Document Type/Class</label>
                   <select id="dropdown-basic-button" title="Choose Document Class" onChange={(e) => docTypeChange(e)} style={{ width: '100%', borderRadius: '16px' }}>
                     <option></option>
-                    {optionsSorted.map(({ value, doc_type, doc_class }, index) => <option key={value} value={value} >{doc_type} {'>'} {doc_class}</option>)}
+                    {/*{optionsSorted.map(({ value, doc_type, doc_class }, index) => <option key={value} value={value} >{doc_type} {'>'} {doc_class}</option>)}*/}
 
                   </select>
                   <br /> <br />

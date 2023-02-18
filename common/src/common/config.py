@@ -83,10 +83,9 @@ def load_config(bucketname, filename):
         data = json.loads(blob.download_as_text(encoding="utf-8"))
         return data
       else:
-        print(f"___________file does not exist {filename} _____")
-        print(f"___________gs://{bucketname}/{filename}  _____")
+        Logger.error(f"Error: file does not exist gs://{bucketname}/{filename}")
     else:
-      print("___________bucket does not exist _____")
+      Logger.error(f"Error: bucket does not exist {bucketname}")
   except Exception as e:
     Logger.error(f"Error: while obtaining file from GCS gs://{bucketname}/{filename} {e}")
     return None
@@ -97,17 +96,18 @@ def load_config(bucketname, filename):
   return json.load(json_file)
 
 
-def get_config(config_name):
+def get_config(config_name=None):
   start_time = time.time()
   config = load_config(CONFIG_BUCKET, CONFIG_FILE_NAME)
   assert config, f"Unable to locate '{config_name} or incorrect JSON file'"
-  select_config = config.get(config_name)
-  Logger.info(f"{config_name}={select_config}")
+  if config_name:
+    config = config.get(config_name)
+    Logger.info(f"{config_name}={config}")
 
   process_time = time.time() - start_time
   time_elapsed = round(process_time * 1000)
-  Logger.info(f"Retrieving {config_name} took : {str(time_elapsed)} ms")
-  return select_config
+  Logger.info(f"Retrieving config_name={config_name} took : {str(time_elapsed)} ms")
+  return config
 
 
 def get_parser_config():
