@@ -20,6 +20,8 @@ PWD=$(pwd)
 
 GLOBAL_CONFIG_FILE="config.json"
 CONFIG_DIR="${DIR}/../common/src/common/config"
+(terraform output -json parser_config | python -m json.tool) > "${CONFIG_DIR}/parser_config.json"
+
 cd "${CONFIG_DIR}" || exit
 jq -n 'reduce inputs as $s (.; (.[input_filename|rtrimstr(".json")]) += $s)'  parser_config.json  settings_config.json document_types_config.json docai_entity_mapping.json > "${GLOBAL_CONFIG_FILE}"
 gsutil cp "${GLOBAL_CONFIG_FILE}" "gs://${TF_VAR_config_bucket}/config.json"

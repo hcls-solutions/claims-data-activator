@@ -32,19 +32,23 @@ source ~/venv/pa/bin/activate
 ```
 
 ### Prerequisites
+It is recommended to deploy two projects: one for the Pipeline Engine, and another for the Document AI processors. Both projects need to belong in the same Org. 
+When following this  practice, first create project used to host Document AI. Then create second project for deployment. Otherwise, when both DocAI and Pipeline deployed into the same project, use same PROJECT_ID in the commands below.
+
 *Important*: User needs to have Project **owner** role in order to deploy  terraform setup.
 ```
-export PROJECT_ID=<GCP Project ID>
+export PROJECT_ID=<GCP Project ID to host Data ingestion microservices>
 export API_DOMAIN=mydomain.com
 ```
 Note, If you do not have a custom domain, leave a dummy one `mydomain.com` (needs to be set to a legal name as a placeholder) and then later run an optional step below to configure using Ingress IP address instead.
 
 
+Activate Project for the pipeline deployment:
 ```shell
 gcloud config set project $PROJECT_ID
 ```
 
-Run following commands locally (not required for Cloud Shell):
+Run following commands when deploying from developer machine  (not required for Cloud Shell):
 ```shell
 gcloud auth login
 gcloud auth application-default login
@@ -154,7 +158,11 @@ When processed, documents are copied to `gs://${PROJECT_ID}-document-upload` wit
 
 
 To verify the Pipeline worked, go to BigQuery and check for the extracted data inside `validation` dataset and `validation_table`.
-Sample queries are located in [sql-scripts/](sql-scripts)
+Run sample query: 
+```shell
+./sql-scripts/run_query.sh
+```
+
 
 ## Next Steps
 In the next steps you will set up specialized Processor and Classifier to handle custom Prior-Auth form. Previously only Form parser available out-of-the-box was used.
@@ -218,8 +226,10 @@ Use Classifier ID for the pipeline config.
   ````
 
 ## Cross-Project Setup
-It is possible for the pipeline to work, accessing a separate project (within same org) with customized processor and Classifier. For that additional steps need to be done for cross project access:
+If later (not within initialization step provided DOCAI_PROJECT_ID) you want to enable cross project access, following steps need to be done manually. Otherwise they are part of terraform execution and done for you.
 
+Limitations: Two projects need to be within the same ORG. 
+For further reference, lets define the two projects:
 - GCP Project to run the Claims Data Activator - Engine (**Project CDA**)
 - GCP Project to train and serve Document AI Processors and Classifier  (**Project DocAI**)
 
