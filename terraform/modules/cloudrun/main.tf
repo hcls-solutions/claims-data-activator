@@ -148,6 +148,11 @@ resource "google_cloud_run_service" "cloudrun-service" {
           name  = "API_DOMAIN"
           value = var.api_domain
         }
+        env {
+          # API endpoint domain
+          name  = "CONFIG_BUCKET"
+          value = var.config_bucket
+        }
       }
       service_account_name = module.cloud-run-service-account.email
     }

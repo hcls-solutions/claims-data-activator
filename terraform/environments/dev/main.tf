@@ -130,6 +130,7 @@ module "cloudrun-queue" {
   name       = "queue"
   region     = var.region
   api_domain = var.api_domain
+  config_bucket = var.config_bucket
 }
 
 module "cloudrun-start-pipeline" {
@@ -142,6 +143,7 @@ module "cloudrun-start-pipeline" {
   name       = "startpipeline"
   region     = var.region
   api_domain = var.api_domain
+  config_bucket = var.config_bucket
 }
 
 
@@ -181,18 +183,6 @@ module "cloudrun-queue-pubsub" {
   service_account_email = module.cloudrun-queue.service_account_email
 }
 
-# give backup SA rights on bucket
-resource "google_storage_bucket_iam_binding" "cloudrun_sa_storage_binding" {
-  bucket = google_storage_bucket.document-load.name
-  role   = "roles/storage.admin"
-  members = [
-    "serviceAccount:${module.cloudrun-start-pipeline.service_account_email}",
-  ]
-  depends_on = [
-    module.cloudrun-start-pipeline,
-    google_storage_bucket.document-load
-  ]
-}
 
 data "google_storage_project_service_account" "gcs_account" {
 }
@@ -205,6 +195,31 @@ resource "google_project_iam_member" "gcs_pubsub_publishing" {
   member  = "serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"
 }
 
+# Bucket to process batch documents on START_PIPELINE
+resource "google_storage_bucket" "document-load" {
+  name                        = local.forms_gcs_path
+  location                    = local.multiregion
+  storage_class               = "STANDARD"
+  uniform_bucket_level_access = true
+  force_destroy               = true
+  labels = {
+    goog-packaged-solution = "prior-authorization"
+  }
+}
+
+
+# give backup SA rights on bucket
+resource "google_storage_bucket_iam_binding" "cloudrun_sa_storage_binding" {
+  bucket = google_storage_bucket.document-load.name
+  role   = "roles/storage.admin"
+  members = [
+    "serviceAccount:${module.cloudrun-start-pipeline.service_account_email}",
+  ]
+  depends_on = [
+    module.cloudrun-start-pipeline,
+    google_storage_bucket.document-load
+  ]
+}
 
 resource "time_sleep" "wait_for_eventarc_service_agent_permissions" {
   depends_on = [
@@ -262,7 +277,7 @@ module "docai" {
     time_sleep.wait_for_project_services
   ]
   source     = "../../modules/docai"
-  project_id = var.project_id
+  project_id = var.docai_project_id
 
   # See modules/docai/README.md for available DocAI processor types.
   # Once applied Terraform changes, please run /setup/update_config.sh
@@ -271,8 +286,57 @@ module "docai" {
     //    unemployment_form = "FORM_PARSER_PROCESSOR"
     claims_form     = "FORM_PARSER_PROCESSOR"
     prior_auth_form = "CUSTOM_EXTRACTION_PROCESSOR"
-    classifier      = "CUSTOM_CLASSIFICATION_PROCESSOR"
+//    classifier      = "CUSTOM_CLASSIFICATION_PROCESSOR" # Need to become GA
   }
+}
+
+
+# ================= Setup Cross Project Access ====================
+resource "google_project_iam_member" "project-gke-docai-access" {
+  count   = var.docai_project_id !=  var.project_id ? 1 : 0
+  project = var.docai_project_id
+  member  = "serviceAccount:${module.gke.service_account_email}"
+  role    = "roles/documentai.viewer"
+  depends_on = [
+    module.gke,
+  ]
+}
+
+data "google_project" "docai_project" {
+  project_id = var.docai_project_id
+}
+
+output "project_docai_number" {
+  value = data.google_project.project.number
+}
+
+# give backup SA rights on bucket
+# TODO gives error that
+resource "google_storage_bucket_iam_binding" "cda-docai_sa_storage_load_binding" {
+  count   = var.docai_project_id !=  var.project_id ? 1 : 0
+  bucket = google_storage_bucket.document-load.name
+  role   = "roles/storage.admin"
+  members = [
+    "serviceAccount:service-${data.google_project.docai_project.number}@gcp-sa-prod-dai-core.iam.gserviceaccount.com",
+  ]
+  depends_on = [
+    google_storage_bucket.document-load,
+    module.docai
+  ]
+}
+
+# TODO Use gke module to access sa
+resource "google_storage_bucket_iam_binding" "cda-docai_sa_storage_output_binding" {
+  count   = var.docai_project_id !=  var.project_id ? 1 : 0
+  bucket = google_storage_bucket.docai-output.name
+  role   = "roles/storage.admin"
+  members = [
+    "serviceAccount:service-${data.google_project.docai_project.number}@gcp-sa-prod-dai-core.iam.gserviceaccount.com",
+  ]
+  depends_on = [
+    google_storage_bucket.docai-output,
+    module.gke
+  ]
 }
 
 # ================= Storage buckets ====================
@@ -299,18 +363,6 @@ resource "google_storage_bucket" "document-upload" {
   }
 }
 
-
-# Bucket to process batch documents on START_PIPELINE
-resource "google_storage_bucket" "document-load" {
-  name                        = local.forms_gcs_path
-  location                    = local.multiregion
-  storage_class               = "STANDARD"
-  uniform_bucket_level_access = true
-  force_destroy               = true
-  labels = {
-    goog-packaged-solution = "prior-authorization"
-  }
-}
 
 # Bucket to store config
 resource "google_storage_bucket" "pa-config" {
@@ -360,16 +412,6 @@ resource "null_resource" "sample-data" {
   ]
   provisioner "local-exec" {
     command = "gsutil -m  cp -r ../../../sample_data gs://${google_storage_bucket.document-load.name}/"
-  }
-}
-
-# Copying Configurations.
-resource "null_resource" "pa-config" {
-  depends_on = [
-    google_storage_bucket.pa-config
-  ]
-  provisioner "local-exec" {
-    command = "gsutil -m cp -r ../../../common/src/common/config gs://${google_storage_bucket.pa-config.name}/"
   }
 }
 

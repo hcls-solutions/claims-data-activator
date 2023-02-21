@@ -34,3 +34,8 @@ variable "api_domain" {
   type        = string
   description = "API domain"
 }
+
+variable "config_bucket" {
+  type        = string
+  description = "Config Bucket on GCS"
+}
