@@ -147,7 +147,7 @@ def get_classification_confidence_threshold():
 
 def get_classification_default_label():
   settings = get_docai_settings()
-  return float(settings.get("classification_default_label"))
+  return settings.get("classification_default_label")
 
 
 APPLICATION_FORM_DISPLAY_NAME = "Application Form"

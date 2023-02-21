@@ -134,13 +134,36 @@ class DocClassifier:
       # # Sample raw prediction_result
       # # {'scores': [0.0136728594, 0.0222843271, 0.908525527, 0.0222843271, 0.0332329459], 'labels': ['PayStub', 'Utility', 'UE', 'Claim', 'DL'], 'key': '/opt/routes/temp_files/06_09_2022_01_59_10_temp_files\\7f2ec4ee-2d87-11ed-a71c-c2c2b7b788a8_7FvQ5G3dddti02sHbBhK_arizona-application-form_0.png'}
       #
+      classification_default_class = get_classification_default_label()
 
-      predicted_score = -1.0
-      predicted_class = None
-      for index, label in enumerate(prediction_result["labels"]):
-        if prediction_result["scores"][index] > predicted_score:
-          predicted_score = prediction_result["scores"][index]
-          predicted_class = label
+      if prediction_result is None:
+        # Using Default Type of form (for example when classifier is not defined)
+        # We will classify all documents as Claim (demo) Right Now when classifier not set
+
+        Logger.warning(f"Falling back on the default class {classification_default_class}")
+        predicted_class = classification_default_class
+        predicted_score = 1.0
+      else:
+        predicted_score = -1.0
+        predicted_class = None
+        for index, label in enumerate(prediction_result["labels"]):
+          if prediction_result["scores"][index] > predicted_score:
+            predicted_score = prediction_result["scores"][index]
+            predicted_class = label
+
+      Logger.info(f"Classification results in predicted_class={predicted_class}, predicted_score={predicted_score} for case_id={self.case_id}  uid={self.uid} gcs_url={self.pdf_path}")
+      # If confidence is greater than the threshold then it's a valid doc
+      if predicted_score < get_classification_confidence_threshold():
+        Logger.warning(f"Classifier could not pass the Classification Confidence threshold, falling back on the default class {classification_default_class}")
+        predicted_class = classification_default_class
+
+      output = {
+          'case_id': self.case_id,
+          'u_id': self.uid,
+          'predicted_class': predicted_class,
+          'model_conf': predicted_score,
+      }
+      return json.dumps(output)
 
     # remove the image from local after prediction as it is of no use further
     # os.remove(img_path)
@@ -149,23 +172,6 @@ class DocClassifier:
     except Exception as e:
       Logger.error(f"Error while getting predictions from classifier for {self.pdf_path}")
       Logger.error(e)
+      return None
 
-      # We will classify all documents as Claim (demo) Right Now when classifier not set
-      classification_default_class = get_classification_default_label()
-      Logger.warning(f"Falling back on the default class {classification_default_class}")
-      predicted_class = classification_default_class
-      predicted_score = 1.0
 
-    Logger.info(f"Classification results in predicted_class={predicted_class}, predicted_score={predicted_score} for case_id={self.case_id}  uid={self.uid} gcs_url={self.pdf_path}")
-    # If confidence is greater than the threshold then it's a valid doc
-    if predicted_score < get_classification_confidence_threshold():
-      Logger.warning(f"Classifier could not pass the Classification Confidence threshold, falling back on the default class {classification_default_class}")
-      predicted_class = classification_default_class
-
-    output = {
-        'case_id': self.case_id,
-        'u_id': self.uid,
-        'predicted_class': predicted_class,
-        'model_conf': predicted_score,
-    }
-    return json.dumps(output)
