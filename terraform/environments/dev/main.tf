@@ -130,7 +130,6 @@ module "cloudrun-queue" {
   name       = "queue"
   region     = var.region
   api_domain = var.api_domain
-  config_bucket = var.config_bucket
 }
 
 module "cloudrun-start-pipeline" {
@@ -143,7 +142,6 @@ module "cloudrun-start-pipeline" {
   name       = "startpipeline"
   region     = var.region
   api_domain = var.api_domain
-  config_bucket = var.config_bucket
 }
 
 
