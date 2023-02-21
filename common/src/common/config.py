@@ -150,9 +150,6 @@ def get_classification_default_label():
   return float(settings.get("classification_default_label"))
 
 
-DOCUMENTS_TYPE_CONFIG = get_document_types_config()
-
-
 APPLICATION_FORM_DISPLAY_NAME = "Application Form"
 APPLICATION_FORM = "application_form"
 SUPPORTING_DOC = "supporting_documents"
@@ -161,10 +158,6 @@ SUPPORTED_DOC_TYPES = {
     APPLICATION_FORM: APPLICATION_FORM_DISPLAY_NAME,
     SUPPORTING_DOC: SUPPORTING_DOC_DISPLAY_NAME
 }
-# APPLICATION_FORMS = [k for k, v in DOCUMENTS_TYPE_CONFIG.items() if v.get("doc_type") == APPLICATION_FORM]
-# Logger.info(f"APPLICATION_FORMS={APPLICATION_FORMS}")
-# SUPPORTING_DOCS = [k for k, v in DOCUMENTS_TYPE_CONFIG.items() if v.get("doc_type") == SUPPORTING_DOC]
-# Logger.info(f"SUPPORTING_DOCS={SUPPORTING_DOCS}")
 
 
 def get_document_class_by_label(label_name):
@@ -175,8 +168,6 @@ def get_document_class_by_label(label_name):
         Logger.warning(f"Doc class {k} does not have a valid doc_type (should be in {SUPPORTED_DOC_TYPES.keys()}). Assigning {SUPPORTING_DOC} for now")
         doc_type = SUPPORTING_DOC
       return k, doc_type
-
-  Logger.warning(f"{label_name} is not a valid classifier label listed in {DOCUMENTS_TYPE_CONFIG}.")
 
   return label_name, SUPPORTING_DOC
 
