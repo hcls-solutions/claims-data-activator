@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 # pylint: disable=broad-except
+import logging
 import time
 from typing import Any
 from typing import Dict
@@ -42,10 +43,9 @@ from .utils_functions import entities_extraction, download_pdf_gcs, \
   extract_form_fields, del_gcs_folder, \
   form_parser_entities_mapping, extraction_accuracy_calc, \
   clean_form_parser_keys, standard_entity_mapping, strip_value
-from common.config import PROJECT_ID
 from common.extraction_config import DOCAI_OUTPUT_BUCKET_NAME, \
   DOCAI_ATTRIBUTES_TO_IGNORE
-from common.config import get_parser_config, get_docai_entity_mapping
+from common.config import get_parser_config, get_docai_entity_mapping, get_document_types_config
 from common.utils.logging_handler import Logger
 import warnings
 from google.cloud import storage
@@ -464,7 +464,17 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
               f"doc_class={doc_class}, context={context}")
   # read parser details from configuration json file
   parsers_info = get_parser_config()
-  parser_information = parsers_info.get(doc_class)
+
+  doc_type = get_document_types_config().get(doc_class)
+  if not doc_type:
+    Logger.error(f"doc_class {doc_class} not present in document_types_config")
+    return None
+
+  parser_name = doc_type.get("parser")
+  Logger.info(f"Using doc_class={doc_class}, parser_name={parser_name}")
+
+  parser_information = parsers_info.get(parser_name)
+
   # if parser present then do extraction else update the status
   if parser_information:
     parser_name = parser_information["parser_name"]
@@ -515,6 +525,6 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
            document_extraction_confidence, extraction_status, extraction_field_min_score
   else:
     # Parser not available
-    Logger.error(f"Parser not available for this document:{doc_class}")
+    Logger.error(f"Parser not available for this document: {doc_class}")
     # print("parser not available for this document")
     return None
