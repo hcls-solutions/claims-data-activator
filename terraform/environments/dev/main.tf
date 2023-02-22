@@ -281,9 +281,8 @@ module "docai" {
   # Once applied Terraform changes, please run /setup/update_config.sh
   # to automatically update common/src/common/parser_config.json.
   processors = {
-    //    unemployment_form = "FORM_PARSER_PROCESSOR"
-    claims_form     = "FORM_PARSER_PROCESSOR"
-    prior_auth_form = "CUSTOM_EXTRACTION_PROCESSOR"
+    claims_form_parser     = "FORM_PARSER_PROCESSOR"
+    prior_auth_form_parser = "CUSTOM_EXTRACTION_PROCESSOR"
 //    classifier      = "CUSTOM_CLASSIFICATION_PROCESSOR" # Need to become GA
   }
 }
