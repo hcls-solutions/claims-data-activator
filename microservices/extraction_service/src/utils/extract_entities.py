@@ -452,8 +452,16 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
   parser_details = parsers_info.get(parser_name)
 
   if parser_details:
-    location = parser_details["location"]
     processor_path = parser_details["processor_id"]
+    location = parser_details.get("location")
+    if not location:
+      m = re.match(r'projects/(.+)/locations/(.+)/processors', processor_path)
+      if m and len(m.groups()) >= 2:
+        location = m.group(2)
+      else:
+        Logger.error(f"Unidentified location for parser {processor_path}")
+        return
+
     opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
 
     dai_client = documentai.DocumentProcessorServiceClient(client_options=opts)
