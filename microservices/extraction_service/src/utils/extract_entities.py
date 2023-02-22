@@ -98,7 +98,7 @@ def get_key_values_dic(entity: documentai.Document.Entity,
     existing_entity.append(new_entity_value)
 
 
-def specialized_parser_extraction(parser_details: dict, gcs_doc_path: str,
+def specialized_parser_extraction(processor, dai_client, gcs_doc_path: str,
     doc_class: str, context: str):
   """
     This is specialized parser extraction main function.
@@ -116,17 +116,6 @@ def specialized_parser_extraction(parser_details: dict, gcs_doc_path: str,
     -------
   """
 
-  # The full resource name of the processor, e.g.:
-  # projects/project-id/locations/location/processor/processor-id
-
-  location = parser_details["location"]
-  processor_path = parser_details["processor_id"]
-  opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
-
-  dai_client = documentai_v1beta3.DocumentProcessorServiceClient(client_options=opts)
-
-  # name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
-  name = processor_path
   blob = download_pdf_gcs(gcs_uri=gcs_doc_path)
 
   document = {
@@ -134,12 +123,9 @@ def specialized_parser_extraction(parser_details: dict, gcs_doc_path: str,
       "mime_type": "application/pdf"
   }
   # Configure the process request
-  request = {"name": name, "raw_document": document}
+  request = {"name": processor.name, "raw_document": document}
 
-  #TODO Something wrong with the docai version
-  #Getting Error: 'DocumentProcessorServiceClient' object has no attribute 'get_processor'
-  processor = dai_client.get_processor(name=processor_path)
-  Logger.info(f"Calling Specialized parser extraction api for processor with name={processor.name} type={processor.type_}, path={processor_path}")
+  Logger.info(f"Calling Specialized parser extraction api for processor with name={processor.name} type={processor.type_}")
   start = time.time()
   # send request to parser
   result = dai_client.process_document(request=request)
@@ -231,7 +217,7 @@ def write_config(bucket_name, blob_name, keys):
     f.write('}\n')
 
 
-def form_parser_extraction(parser_details: dict, gcs_doc_path: str,
+def form_parser_extraction(processor, dai_client, gcs_doc_path: str,
     doc_class: str, context: str, timeout: int = 300):
   """
   This is form parser extraction main function. It will send
@@ -250,12 +236,6 @@ def form_parser_extraction(parser_details: dict, gcs_doc_path: str,
     confidence and manual_extraction information.
     -------
   """
-
-  location = parser_details["location"]
-  processor_id = parser_details["processor_id"]
-  opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
-
-  dai_client = documentai.DocumentProcessorServiceClient(client_options=opts)
 
   gcs_documents = documentai.GcsDocuments(documents=[{
       "gcs_uri": gcs_doc_path,
@@ -276,24 +256,20 @@ def form_parser_extraction(parser_details: dict, gcs_doc_path: str,
   # delete temp folder
   # del_gcs_folder(gcs_output_uri.split("//")[1], gcs_output_uri_prefix)
 
-
   # Temp op folder location
   output_config = documentai.DocumentOutputConfig(
       gcs_output_config={"gcs_uri": destination_uri})
 
   Logger.info(f"input_config = {input_config}")
   Logger.info(f"output_config = {output_config}")
-  Logger.info(f"processor_id = {processor_id}")
+  Logger.info(f"processor_name = {processor.display_name}")
 
-  # parser api end point
-  # name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
-  processor = dai_client.get_processor(name=processor_id)
-  Logger.info(f"Calling Form parser extraction api for processor with name={processor.name} type={processor.type_}, path={processor_id}")
+  Logger.info(f"Calling Form parser extraction api for processor with name={processor.name} type={processor.type_}, path={processor.display_name}")
   start = time.time()
 
   # request for Doc AI
   request = documentai.types.document_processor_service.BatchProcessRequest(
-      name=processor_id,
+      name="projects/prior-auth-poc/locations/us/processors/79b2c1fa8b5b2e8a",
       input_documents=input_config,
       document_output_config=output_config,
   )
@@ -465,36 +441,40 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
   # read parser details from configuration json file
   parsers_info = get_parser_config()
 
-  doc_type = get_document_types_config().get(doc_class)
-  if not doc_type:
+  doc = get_document_types_config().get(doc_class)
+  if not doc:
     Logger.error(f"doc_class {doc_class} not present in document_types_config")
     return None
 
-  parser_name = doc_type.get("parser")
+  parser_name = doc.get("parser")
   Logger.info(f"Using doc_class={doc_class}, parser_name={parser_name}")
 
-  parser_information = parsers_info.get(parser_name)
+  parser_details = parsers_info.get(parser_name)
 
-  # if parser present then do extraction else update the status
-  if parser_information:
-    parser_type = parser_information["parser_type"]
+  if parser_details:
+    location = parser_details["location"]
+    processor_path = parser_details["processor_id"]
+    opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
 
-    print(f"parser_type={parser_type}, parser_name={parser_name}")
+    dai_client = documentai.DocumentProcessorServiceClient(client_options=opts)
+    processor = dai_client.get_processor(name=processor_path)
+
+    print(f"parser_type={processor.type_}, parser_name={parser_name}")
     # Todo Refactor, not use the type here. Makes no sense. Instead check the real processor type (not from config) and do entity extraction differently.
     # Todo: And send all document s to batch processing universally here.
-    if parser_type == "FORM_PARSER_PROCESSOR":
+    if processor.type_ == "FORM_PARSER_PROCESSOR":
       Logger.info(f"Form parser extraction started for"
                   f" document doc_class={doc_class}")
       desired_entities_list, flag = form_parser_extraction(
-          parser_information, gcs_doc_path, doc_class, context)
-    elif parser_type == "CUSTOM_EXTRACTION_PROCESSOR":
+          processor, dai_client, gcs_doc_path, doc_class, context)
+    elif processor.type_ == "CUSTOM_EXTRACTION_PROCESSOR":
       Logger.info(f"Specialized parser extraction "
                   f"started for this document doc_class={doc_class}")
       flag = True
       desired_entities_list = specialized_parser_extraction(
-          parser_information, gcs_doc_path, doc_class, context)
+          processor, dai_client, gcs_doc_path, doc_class, context)
     else:
-      Logger.error(f"Currently unsupported parser type {parser_type}, exiting")
+      Logger.error(f"Currently unsupported parser type {processor.type_}, exiting")
       return
     # calling standard entity mapping function to standardize the entities
     final_extracted_entities = standard_entity_mapping(desired_entities_list)
