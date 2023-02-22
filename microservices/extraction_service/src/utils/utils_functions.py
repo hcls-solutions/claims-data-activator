@@ -337,14 +337,13 @@ def consolidate_coordinates(d):
       return None
 
 
-def standard_entity_mapping(desired_entities_list, parser_name):
+def standard_entity_mapping(desired_entities_list):
   """
     This function changes entity name to standard names and also
                 create consolidated entities like name and date
     Parameters
     ----------
     desired_entities_list: List of default and derived entities
-    parser_name: name of the parser
 
     Returns: Standard entities list
     -------

@@ -74,7 +74,7 @@ class DocClassifier:
       return None
     location = parser_details["location"]
     processor_id = parser_details["processor_id"]
-    parser_name = parser_details["parser_name"]
+
     opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
 
     client = documentai.DocumentProcessorServiceClient(client_options=opts)
@@ -87,7 +87,7 @@ class DocClassifier:
     }
     # Configure the process request
     request = {"name": name, "raw_document": document}
-    Logger.info(f"Specialized parser extraction api called for processor {parser_name} with id={processor_id}")
+    Logger.info(f"Specialized parser extraction api called for processor {CLASSIFIER} with id={processor_id}")
     # send request to parser
     result = client.process_document(request=request)
     parser_doc_data = result.document

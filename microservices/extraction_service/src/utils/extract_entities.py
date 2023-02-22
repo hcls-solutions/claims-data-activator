@@ -477,7 +477,6 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
 
   # if parser present then do extraction else update the status
   if parser_information:
-    parser_name = parser_information["parser_name"]
     parser_type = parser_information["parser_type"]
 
     print(f"parser_type={parser_type}, parser_name={parser_name}")
@@ -498,8 +497,7 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
       Logger.error(f"Currently unsupported parser type {parser_type}, exiting")
       return
     # calling standard entity mapping function to standardize the entities
-    final_extracted_entities = standard_entity_mapping(desired_entities_list,
-                                                       parser_name)
+    final_extracted_entities = standard_entity_mapping(desired_entities_list)
     # calling post processing utility function
     # input json is the extracted json file after your mapping script
     input_dict = get_json_format_for_processing(final_extracted_entities)
