@@ -22,6 +22,9 @@ from typing import Dict
 
 import pandas as pd
 
+import common.config
+from common.utils.helper import get_processor_location
+
 """
 This is the main file for extraction framework, based on \
     doc type specialized parser or
@@ -439,51 +442,35 @@ def extract_entities(gcs_doc_path: str, doc_class: str, context: str):
   Logger.info(f"extract_entities with gcs_doc_path={gcs_doc_path}, "
               f"doc_class={doc_class}, context={context}")
   # read parser details from configuration json file
-  parsers_info = get_parser_config()
-
-  doc = get_document_types_config().get(doc_class)
-  if not doc:
-    Logger.error(f"doc_class {doc_class} not present in document_types_config")
-    return None
-
-  parser_name = doc.get("parser")
-  Logger.info(f"Using doc_class={doc_class}, parser_name={parser_name}")
-
-  parser_details = parsers_info.get(parser_name)
+  parser_details = common.config.get_parser_by_doc_class(doc_class)
 
   if parser_details:
     processor_path = parser_details["processor_id"]
-    location = parser_details.get("location")
+
+    location = parser_details.get("location", get_processor_location(processor_path))
     if not location:
-      m = re.match(r'projects/(.+)/locations/(.+)/processors', processor_path)
-      if m and len(m.groups()) >= 2:
-        location = m.group(2)
-      else:
-        Logger.error(f"Unidentified location for parser {processor_path}")
-        return
+      Logger.error(f"Unidentified location for parser {processor_path}")
+      return
 
     opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
 
     dai_client = documentai.DocumentProcessorServiceClient(client_options=opts)
     processor = dai_client.get_processor(name=processor_path)
 
-    print(f"parser_type={processor.type_}, parser_name={parser_name}")
-    # Todo Refactor, not use the type here. Makes no sense. Instead check the real processor type (not from config) and do entity extraction differently.
-    # Todo: And send all document s to batch processing universally here.
-    if processor.type_ == "FORM_PARSER_PROCESSOR":
-      Logger.info(f"Form parser extraction started for"
-                  f" document doc_class={doc_class}")
-      desired_entities_list, flag = form_parser_extraction(
-          processor, dai_client, gcs_doc_path, doc_class, context)
-    elif processor.type_ == "CUSTOM_EXTRACTION_PROCESSOR":
+    print(f"parser_type={processor.type_}, parser_name={processor.display_name}")
+    # Todo Refactor to extract based on selected strategy (to be configured) and not per parser type.
+    if processor.type_ == "CUSTOM_EXTRACTION_PROCESSOR":
       Logger.info(f"Specialized parser extraction "
                   f"started for this document doc_class={doc_class}")
       flag = True
       desired_entities_list = specialized_parser_extraction(
           processor, dai_client, gcs_doc_path, doc_class, context)
     else:
-      Logger.error(f"Currently unsupported parser type {processor.type_}, exiting")
-      return
+      Logger.info(f"Form parser extraction started for"
+                  f" document doc_class={doc_class}")
+      desired_entities_list, flag = form_parser_extraction(
+          processor, dai_client, gcs_doc_path, doc_class, context)
+
     # calling standard entity mapping function to standardize the entities
     final_extracted_entities = standard_entity_mapping(desired_entities_list)
     # calling post processing utility function

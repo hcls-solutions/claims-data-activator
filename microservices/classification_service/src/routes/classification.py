@@ -24,7 +24,7 @@ import traceback
 from fastapi import APIRouter, HTTPException
 
 from common.utils.logging_handler import Logger
-from common.config import get_document_class_by_label
+from common.config import get_document_type
 from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR
 from utils.classification.split_and_classify import DocClassifier
 
@@ -87,7 +87,7 @@ def update_classification_status(case_id: str,
 
 
 @router.post("/classification_api")
-async def classifiction(case_id: str, uid: str, gcs_url: str):
+async def classification(case_id: str, uid: str, gcs_url: str):
   """classifies the  input and updates the active status of document in
         the database
       Args:
@@ -140,14 +140,17 @@ async def classifiction(case_id: str, uid: str, gcs_url: str):
               status_code=500, detail="Failed to update document status")
         raise HTTPException(status_code=422, detail="Invalid Document")
 
-      doc_class, doc_type = get_document_class_by_label(doc_prediction_result["predicted_class"])
+      doc_class = doc_prediction_result["predicted_class"]
+      doc_type = get_document_type(doc_class)
 
       SUCCESS_RESPONSE["case_id"] = doc_prediction_result["case_id"]
       SUCCESS_RESPONSE["uid"] = uid
       SUCCESS_RESPONSE["doc_type"] = doc_type
       SUCCESS_RESPONSE["doc_class"] = doc_class
 
-      Logger.info(f"Classification confidence for case_id={case_id}  uid={uid} gcs_url={gcs_url} is {classification_score}, doc_type={doc_type}, doc_class={doc_class} ")
+      Logger.info(f"Classification confidence for case_id={case_id}  "
+                  f"uid={uid} gcs_url={gcs_url} is {classification_score},"
+                  f" doc_type={doc_type}, doc_class={doc_class} ")
       #DocumentStatus api call
       response = update_classification_status(
           case_id,

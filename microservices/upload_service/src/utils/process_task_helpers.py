@@ -19,9 +19,10 @@ import requests
 import traceback
 from fastapi import HTTPException
 from common.utils.logging_handler import Logger
+
 from utils.autoapproval import get_autoapproval_status
 from typing import List, Dict
-from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR
+from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR, CLASSIFICATION_UNDETECTABLE
 
 
 def run_pipeline(payload: List[Dict], is_hitl: bool, is_reassign: bool):
@@ -166,9 +167,14 @@ def filter_documents(configs: List[Dict]):
     if cl_result.status_code == 200:
       document_type = cl_result.json().get("doc_type")
       document_class = cl_result.json().get("doc_class")
+
       Logger.info(
-          f"Classification successful for {uid}:document_type:{document_type},\
+          f"Classification for {uid}:document_type:{document_type},\
       document_class:{document_class}.")
+
+      if document_class == CLASSIFICATION_UNDETECTABLE:
+        Logger.warning(f"Skipping extraction for unclassified document  {uid} ")
+        continue
 
       if document_type == "application_form":
         config["document_class"] = document_class

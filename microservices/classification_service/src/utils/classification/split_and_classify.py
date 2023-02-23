@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import re
+
 import common.config
 
 """Performs pdf splitting and classification on
@@ -26,8 +28,9 @@ import sys
 from os.path import basename
 from common.config import get_parser_config
 from common.config import CLASSIFIER, get_classification_confidence_threshold, \
-  get_classification_default_label
+  get_document_class_by_classifier_label, get_classification_default_class
 from common.utils.logging_handler import Logger
+from common.utils.helper import get_processor_location
 
 CLASSIFICATION_UNDETECTABLE = "unclassified"
 
@@ -72,22 +75,26 @@ class DocClassifier:
     if not parser_details:
       Logger.error(f"No classification parser defined, exiting classification")
       return None
-    location = parser_details["location"]
-    processor_id = parser_details["processor_id"]
+    processor_path = parser_details["processor_id"]
+    location = parser_details.get("location", get_processor_location(processor_path))
+
+    if not location:
+      Logger.error(f"Unidentified location for parser {processor_path}")
+      return
 
     opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
 
     client = documentai.DocumentProcessorServiceClient(client_options=opts)
     # parser api end point
     # name = f"projects/{project_id}/locations/{location}/processors/{processor_id}"
-    name = processor_id
+    name = processor_path
     document = {
         "content": self.blob.download_as_bytes(),
         "mime_type": "application/pdf"
     }
     # Configure the process request
     request = {"name": name, "raw_document": document}
-    Logger.info(f"Specialized parser extraction api called for processor {CLASSIFIER} with id={processor_id}")
+    Logger.info(f"Specialized parser extraction api called for processor {CLASSIFIER} with id={processor_path}")
     # send request to parser
     result = client.process_document(request=request)
     parser_doc_data = result.document
@@ -134,28 +141,20 @@ class DocClassifier:
       # # Sample raw prediction_result
       # # {'scores': [0.0136728594, 0.0222843271, 0.908525527, 0.0222843271, 0.0332329459], 'labels': ['PayStub', 'Utility', 'UE', 'Claim', 'DL'], 'key': '/opt/routes/temp_files/06_09_2022_01_59_10_temp_files\\7f2ec4ee-2d87-11ed-a71c-c2c2b7b788a8_7FvQ5G3dddti02sHbBhK_arizona-application-form_0.png'}
       #
-      classification_default_class = get_classification_default_label()
-
-      if prediction_result is None:
-        # Using Default Type of form (for example when classifier is not defined)
-        # We will classify all documents as Claim (demo) Right Now when classifier not set
-
-        Logger.warning(f"Falling back on the default class {classification_default_class}")
-        predicted_class = classification_default_class
-        predicted_score = 1.0
-      else:
-        predicted_score = -1.0
-        predicted_class = None
+      predicted_score = -1.0
+      predicted_class = None
+      if prediction_result is not None:
         for index, label in enumerate(prediction_result["labels"]):
           if prediction_result["scores"][index] > predicted_score:
             predicted_score = prediction_result["scores"][index]
-            predicted_class = label
+            predicted_class = get_document_class_by_classifier_label(label)
 
-      Logger.info(f"Classification results in predicted_class={predicted_class}, predicted_score={predicted_score} for case_id={self.case_id}  uid={self.uid} gcs_url={self.pdf_path}")
-      # If confidence is greater than the threshold then it's a valid doc
       if predicted_score < get_classification_confidence_threshold():
-        Logger.warning(f"Classifier could not pass the Classification Confidence threshold, falling back on the default class {classification_default_class}")
-        predicted_class = classification_default_class
+        predicted_class = get_classification_default_class()
+
+      Logger.info(f"Classification results in predicted_class={predicted_class}, "
+                  f"predicted_score={predicted_score} for case_id={self.case_id}  "
+                  f"uid={self.uid} gcs_url={self.pdf_path}")
 
       output = {
           'case_id': self.case_id,

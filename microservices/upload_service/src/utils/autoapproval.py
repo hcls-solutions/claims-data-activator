@@ -69,7 +69,11 @@ def get_autoapproval_status(validation_score, extraction_score,
 
     if extraction_score > global_extraction_confidence_threshold and \
         min_extraction_score_per_field > global_extraction_confidence_threshold_per_field:
-
+      Logger.info(f"Passing threshold configured for Auto-Approve with "
+                  f"min_extraction_score_per_field {min_extraction_score_per_field} > "
+                  f"{global_extraction_confidence_threshold_per_field} and "
+                  f"extraction_score {extraction_score} >"
+                  f" {global_extraction_confidence_threshold}")
       flag = "yes"
       status = STATUS_APPROVED
 
@@ -98,7 +102,7 @@ def get_autoapproval_status(validation_score, extraction_score,
         if check_scores():
           flag = "yes"
           status = STATUS_APPROVED
-          Logger.info(f"Status :{status}")
+          Logger.info(f"Status: {status}")
           return status, flag
 
       else:

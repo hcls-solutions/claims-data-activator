@@ -64,6 +64,7 @@ VALIDATION_TABLE = f"{PROJECT_ID}.validation.validation_table"
 CLASSIFIER = "classifier"
 CONFIG_BUCKET = os.environ.get("CONFIG_BUCKET")
 CONFIG_FILE_NAME = "config.json"
+CLASSIFICATION_UNDETECTABLE = "unclassified"
 
 
 def load_config(bucketname, filename):
@@ -87,7 +88,8 @@ def load_config(bucketname, filename):
     else:
       Logger.error(f"Error: bucket does not exist {bucketname}")
   except Exception as e:
-    Logger.error(f"Error: while obtaining file from GCS gs://{bucketname}/{filename} {e}")
+    Logger.error(
+      f"Error: while obtaining file from GCS gs://{bucketname}/{filename} {e}")
     return None
 
   # Fall-back to local file
@@ -106,7 +108,8 @@ def get_config(config_name=None):
 
   process_time = time.time() - start_time
   time_elapsed = round(process_time * 1000)
-  Logger.info(f"Retrieving config_name={config_name} took : {str(time_elapsed)} ms")
+  Logger.info(
+    f"Retrieving config_name={config_name} took : {str(time_elapsed)} ms")
   return config
 
 
@@ -116,6 +119,17 @@ def get_parser_config():
 
 def get_document_types_config():
   return get_config("document_types_config")
+
+
+def get_parser_by_doc_class(doc_class):
+  doc = get_document_types_config().get(doc_class)
+  if not doc:
+    Logger.error(f"doc_class {doc_class} not present in document_types_config")
+    return None
+
+  parser_name = doc.get("parser")
+  Logger.info(f"Using doc_class={doc_class}, parser_name={parser_name}")
+  return get_parser_config().get(parser_name)
 
 
 def get_docai_entity_mapping():
@@ -135,19 +149,27 @@ def get_extraction_confidence_threshold():
 # Fall back value (when auto-approval config is not available for the form) - to trigger Need Review State
 def get_extraction_confidence_threshold_per_field():
   settings = get_docai_settings()
-  return float(settings.get("field_extraction_confidence_threshold", 0.60))
+  return float(settings.get("field_extraction_confidence_threshold", 0))
 
 
-#Prediction Confidence threshold for the classifier to reject any prediction
-#less than the threshold value.
+# Prediction Confidence threshold for the classifier to reject any prediction
+# less than the threshold value.
 def get_classification_confidence_threshold():
   settings = get_docai_settings()
   return float(settings.get("classification_confidence_threshold", 0.85))
 
 
-def get_classification_default_label():
+def get_classification_default_class():
   settings = get_docai_settings()
-  return settings.get("classification_default_label")
+  classification_default_class = settings.get("classification_default_class",
+                                              CLASSIFICATION_UNDETECTABLE)
+  parser = get_parser_by_doc_class(classification_default_class)
+  if parser:
+    return classification_default_class
+
+  Logger.warning(
+    f"Classification default label {classification_default_class} is not a valid Label or missing a corresponding parser in parser_config")
+  return CLASSIFICATION_UNDETECTABLE
 
 
 APPLICATION_FORM_DISPLAY_NAME = "Application Form"
@@ -160,17 +182,20 @@ SUPPORTED_DOC_TYPES = {
 }
 
 
-def get_document_class_by_label(label_name):
+def get_document_type(doc_name):
+  doc = get_document_types_config().get(doc_name)
+  if doc:
+    return doc.get("doc_type")
+  Logger.error(f"doc_type property is not set for {doc_name}")
+  return None
+
+
+def get_document_class_by_classifier_label(label_name):
   for k, v in get_document_types_config().items():
     if v.get("classifier_label") == label_name:
-      doc_type = v.get("doc_type")
-      if not doc_type or doc_type not in SUPPORTED_DOC_TYPES.keys():
-        Logger.warning(f"Doc class {k} does not have a valid doc_type (should be in {SUPPORTED_DOC_TYPES.keys()}). Assigning {SUPPORTING_DOC} for now")
-        doc_type = SUPPORTING_DOC
-      return k, doc_type
-
-  return label_name, SUPPORTING_DOC
-
+      return k
+  Logger.error(f"classifier_label={label_name} is not assigned to any document in the config")
+  return None
 
 # ========= HITL and Frontend UI =======================
 
