@@ -137,12 +137,12 @@ Optional: [register you domain](https://cloud.google.com/dns/docs/tutorials/crea
 
 #### Working from the UI
 In order to access the Application UI, Navigate to the API Domain IP Address or Domain Name (depending on the setup) in the browser and login with your Google credentials.
-Try Uploading the Document, using *Upload a Document* button.  From Choose Program drop-down, select a state ( pick any )
+Try Uploading the Document, using *Upload a Document* button.  From *Choose Program* drop-down, select a state ( pick any ).
 Right now, the Form Processor is set up as a default processor (since no classifier is deployed or trained), so each document will be processed with the Form Parser and extracted data will be streamed to the BigQuery.
 
-> The setting for the default processor is done through the Classifier Default Label:  "settings_config" -> "classification_default_label"  inside  gs://${PROJECT_ID}-config/config.json file
+> The setting for the default processor is done through the following configuration setting  "settings_config" -> "classification_default_label".  Explained in details in the [Configuring the System](#system_config).
 
-As you click Refresh Icon on the top right, you will see different Status the Pipeline goes through: Classifying -> Extracting -> Approved or Needs Review. 
+As you click Refresh Icon on the top right, you will see different Status the Pipeline goes through: *Classifying -> Extracting -> Approved* or *Needs Review*. 
 
 If you select *View* action, you will see the key/value pairs extracted from the Document. 
 
@@ -152,9 +152,8 @@ You could also run sample query from the Cloud Shell:
 ```shell
 ./sql-scripts/run_query.sh
 ```
-<br>
 
-#### Triggering pipeline for a batch of the documents
+#### Triggering pipeline in a batch mode
 *NB: Currently only pdf documents are supported, so if you have a jpg or png, please first convert it to pdf.*
 
 The Pipeline is triggered when an empty file named START_PIPELINE is uploaded to the `${PROJECT_ID}-pa-forms` GCS bucket. When the START_PIPELINE document is uploaded, all `*.pdf` files containing in that folder are sent to the processing queue.  
@@ -177,7 +176,7 @@ Or send a pdf document by name:
 ```
 
 Alternatively, send a single document to processing:
-- Upload *pdf* form to the **gs://${PROJECT_ID}-pa-forms/<mydir>** bucket and 
+- Upload *pdf* form to the gs://<PROJECT_ID>-pa-forms/<mydir> bucket and 
 - Drop empty START_PIPELINE file to trigger the pipeline execution.
 > After putting START_PIPELINE, the pipeline is automatically triggered  to process  all PDF documents inside the gs://${PROJECT_ID}-pa-forms/<mydir> folder.
 
@@ -225,7 +224,7 @@ Configure Custom Document Classifier (Currently feature is not available for GA 
 utils/copy_forms.sh -f sample_data/<path_to_form>.pdf -d gs://<path_to_gs_uri> -c 10
 ```
 
-## Configuring the System
+## <a name="system_config"></a>Configuring the System
 - Config file is stored in the GCS bucket and dynamically used by the pipeline: `gs://${PROJECT_ID}-config/config.json`
 
 
