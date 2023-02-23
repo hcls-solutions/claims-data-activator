@@ -176,7 +176,7 @@ Or send a pdf document by name:
 ```
 
 Alternatively, send a single document to processing:
-- Upload *pdf* form to the gs://<PROJECT_ID>-pa-forms/<mydir> bucket and 
+- Upload *pdf* form to the gs://<PROJECT_ID>-pa-forms/my_dir and 
 - Drop empty START_PIPELINE file to trigger the pipeline execution.
 > After putting START_PIPELINE, the pipeline is automatically triggered  to process  all PDF documents inside the gs://${PROJECT_ID}-pa-forms/<mydir> folder.
 
