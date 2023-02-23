@@ -246,7 +246,6 @@ Since currently Classifier is not in GA and has to be manually created, followin
 
 ```shell
 "parser_config": {
-  
     # ... parsers here ...
     
     "classifier": {
@@ -260,14 +259,12 @@ Since currently Classifier is not in GA and has to be manually created, followin
 
 ### Adding Support for Additional Type of Forms
 
-- Deploy and train processor 
-- Add configuration for the processor
-- Add configuration for the document
+1. Deploy and train the DocAI  processor.
 
-After Processor is Created and Deployed, add following entry (replace <parser_name> with the name which best describes the processor purpose) 
+
+2. After processor is created and deployed, add following entry (replace <parser_name> with the name which best describes the processor purpose)  inside `parser_config`:
 ```shell
 "parser_config": {
-  
     # ... parsers here ...
       
     "<parser_name>": {
@@ -276,11 +273,10 @@ After Processor is Created and Deployed, add following entry (replace <parser_na
 }
 ```
 
-Add corresponding document type entry inside `document_types_config`:
+3. Add configuration for the document type entry inside `document_types_config`:
 
 ```shell
 "document_types_config": {
-  
      # ... document configurations here ... 
      
     "<document_type_name>": {
@@ -293,7 +289,7 @@ Add corresponding document type entry inside `document_types_config`:
 
 ```
 Where:
-- **doc_type** - can be of "application_form" or "supporting_documents"
+- **doc_type** - Can be of "application_form" or "supporting_documents".
 - **display_name** - Text to be displayed in the UI for the 'Choose Document Type/Class' drop-down when manually Re-Classifying.
 - **classifier_label** - As defined in the Classifier when training on the documents.
 - **parser** - Parser name as defined in the `parser_config` section.
@@ -303,12 +299,12 @@ Where:
 
 - `extraction_confidence_threshold` - threshold to mark documents for HITL as *Needs Review*. Compared with the *calculated average* confidence score across all document  labels. 
 - `field_extraction_confidence_threshold` - threshold to mark documents for HITL as *Needs Review*. Compared with the *minimum* confidence score across all document labels.
-- `classification_confidence_threshold` - threshold to pass Classification step. When the confidence score as returned by the Classifier is less, the default behavior is determined by the `classification_default_class` setting. If the settings is "None" or non-existing document type, document remain `Unclassified`. 
+- `classification_confidence_threshold` - threshold to pass Classification step. When the confidence score as returned by the Classifier is less, the default behavior is determined by the `classification_default_class` setting. If the settings is "None" or non-existing document type, document remain *Unclassified*. 
 - `classification_default_class` - the default behavior for the unclassified forms (or when classifier is not configured). Needs to be a valid  name of the document type, as configured in the `document_types_config`.
 
 
 ## Cross-Project Setup
-If later (not within initialization step provided DOCAI_PROJECT_ID) you want to enable cross project access, following steps need to be done manually. Otherwise they are part of terraform execution and done for you.
+If you want to enable cross project access, following steps need to be done manually.
 
 Limitations: Two projects need to be within the same ORG. 
 For further reference, lets define the two projects:
