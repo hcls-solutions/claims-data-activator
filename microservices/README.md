@@ -8,9 +8,8 @@ This folder contains the code for all the microservices. You can build and deplo
 kustomize version
 ```
 
-2. Skip this step is your currently installed version is 
-4.5.7. You can install kustomize by running the following 
-commands
+2. Skip this step if the currently installed version of kustomize is 
+4.5.7. You can install version 4.5.7 of kustomize by running the following commands
 ```
 sudo rm /usr/local/bin/kustomize
 
