@@ -332,7 +332,7 @@ def specialized_parser_extraction(
 def get_callback_fn(operation, processor_type: str, doc_class: str, configs):
   def post_process_extract(future):
     print(f"post_process_extract - Extraction Complete!")
-    print(f"operation.metadata={operation.metadata}")
+    # print(f"operation.metadata={operation.metadata}")
 
     # Once the operation is complete,
     # get output document information from operation metadata
