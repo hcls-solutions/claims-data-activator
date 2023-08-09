@@ -62,7 +62,7 @@ fuzzywuzzy==0.18.0
 
 
 # pdf splitter
-pypdf2==1.26.0
+pypdf2==1.27.9
 
 # pdf 2 image
 pdf2image==1.15.0
