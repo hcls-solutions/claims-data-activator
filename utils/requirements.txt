@@ -1,6 +1,6 @@
 faker==8.5.1
 pandas==1.2.4
-pyarrow==4.0.1
+pyarrow==14.0.1
 google-cloud-bigquery==2.20.0
 fireo==1.4.1
 firebase_admin
