@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ module "gke-workload-identity" {
   project_id = var.project_id
   roles = [
     "roles/aiplatform.user",
+    "roles/artifactregistry.admin",
     "roles/bigquery.admin",
     "roles/datastore.owner",
     "roles/documentai.admin",
@@ -118,7 +119,6 @@ module "gke-workload-identity" {
     "roles/pubsub.admin",
     "roles/stackdriver.resourceMetadata.writer",
     "roles/storage.admin",
-    "roles/contentwarehouse.documentAdmin",
     "roles/documentai.apiUser"
   ]
 }

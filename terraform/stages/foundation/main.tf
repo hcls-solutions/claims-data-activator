@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ locals {
     "dns.googleapis.com",                  # Cloud DNS
     "iap.googleapis.com",                  # IAP
     "secretmanager.googleapis.com",        # Secret Manager
-    "contentwarehouse.googleapis.com",     # DocAI Warehouse
   ]
 
   services_docai = [
@@ -193,7 +192,7 @@ module "gke" {
   service_account_name = var.service_account_name_gke
 
   # See latest stable version at https://cloud.google.com/kubernetes-engine/docs/release-notes-stable
-  kubernetes_version = "1.29.0-gke.1381000"
+  kubernetes_version = "1.28.9-gke.1000000"
 
 }
 
@@ -513,5 +512,11 @@ resource "null_resource" "sample-data" {
   }
 }
 
+resource "google_artifact_registry_repository" "docker_repository" {
+  location      = var.region
+  repository_id = "gcr-artifacts"
+  description   = "Docker repository for Microservices"
+  format        = "DOCKER"
+}
 
 

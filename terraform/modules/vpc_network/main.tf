@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,40 +195,3 @@ module "cloud-nat" {
   log_config_enable                  = true
   log_config_filter                  = "ERRORS_ONLY"
 }
-
-# resource "google_compute_network" "vpc_network" {
-#   name = var.vpc_network
-#   auto_create_subnetworks = true
-# }
-
-# module "vpc" {
-#   source       = "terraform-google-modules/network/google"
-#   version      = "~> 4.0"
-#   project_id   = var.project_id
-#   network_name = var.vpc_network
-#   routing_mode = "GLOBAL"
-#   auto_create_subnetworks = true
-# }
-
-# resource "google_compute_router" "router" {
-#   name    = "${var.project_id}-router"
-#   region  = var.region
-#   network = google_container_cluster.main-cluster.network
-
-#   bgp {
-#     asn = 64514
-#   }
-# }
-
-# resource "google_compute_router_nat" "nat" {
-#   name                               = "router-nat"
-#   router                             = google_compute_router.router.name
-#   region                             = google_compute_router.router.region
-#   nat_ip_allocate_option             = "AUTO_ONLY"
-#   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
-
-#   log_config {
-#     enable = true
-#     filter = "ERRORS_ONLY"
-#   }
-# }

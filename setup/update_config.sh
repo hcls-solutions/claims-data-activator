@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
 # limitations under the License.
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PWD=$(pwd)
-#(terraform output -json parser_config | python -m json.tool) > "${CONFIG_DIR}"/parser_config.json
-#(terraform output -json vertex_ai | python -m json.tool) > ../../../common/src/common/vertex_ai_config.json
-
 
 # This step should be executed only initially,
 # otherwise it will over-write the customized config.json file

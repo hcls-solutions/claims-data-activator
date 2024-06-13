@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,65 +16,6 @@
  */
 
 #Creating a pubsub resource for start pipeline
-
-##creating pubsub topic
-#resource "google_pubsub_topic" "queue" {
-#  name = var.topic
-#}
-
-#resource "google_eventarc_trigger" "queue-topic-trigger" {
-#  provider        = google-beta
-#  name            = "queue-topic-trigger"
-#  project         = var.project_id
-#  location        = var.region
-#  service_account = var.service_account_email
-#
-#  matching_criteria {
-#    attribute = "type"
-#    value     = "google.cloud.pubsub.topic.v1.messagePublished"
-#  }
-#  destination {
-#    cloud_run_service {
-#      service = var.cloudrun_name
-#      region  = var.cloudrun_location
-#      path    = "/queue/publish"
-#    }
-#  }
-#  transport {
-#    pubsub {
-#      topic = google_pubsub_topic.queue.name
-#    }
-#  }
-#}
-
-#Creating a pubsub resource for start-pipeline
-
-#creating pubsub topic
-#resource "google_pubsub_topic" "start-pipeline" {
-#  name = var.topic
-#}
-
-# Define a Cloud Run service as an event target
-#resource "google_cloud_run_service" "default" {
-#  provider = google-beta
-#  name     = "cloudrun-hello-tf"
-#  location = "us-east1"
-#
-#  template {
-#    spec {
-#      containers {
-#        image = "gcr.io/cloudrun/hello"
-#      }
-#    }
-#  }
-#
-#  traffic {
-#    percent         = 100
-#    latest_revision = true
-#  }
-#
-#}
-
 
 resource "google_eventarc_trigger" "pipeline-topic-trigger" {
   provider        = google
@@ -100,9 +41,4 @@ resource "google_eventarc_trigger" "pipeline-topic-trigger" {
       path    = "/start-pipeline/run"
     }
   }
-#  transport {
-#    pubsub {
-#      topic = google_pubsub_topic.start-pipeline.name
-#    }
-#  }
 }

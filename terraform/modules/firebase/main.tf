@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ resource "google_storage_bucket" "firestore-backup-bucket" {
   }
 }
 
-# main service account to be used by kubernetes pods running the aplpications
+# main service account to be used by kubernetes pods running the applications
 module "firebase_backup_sa" {
   source       = "terraform-google-modules/service-accounts/google"
   version       = "4.2.2"
