@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: skaffold/v3
+apiVersion: skaffold/v4beta1
 kind: Config
 metadata:
   name: document-status-service
 requires:
   - path: ../../common
     configs: [common]
+
 build:
-  tagPolicy:
-    gitCommit: {}
-  local:
-    concurrency: 0
+  googleCloudBuild: {}
   artifacts:
   - image: document-status-service
+    docker:
+      cacheFrom:
+        - document-status-service
+        - document-status-service:latest
     requires:
       - image: common
         alias: BASE_IMG
@@ -33,39 +35,14 @@ build:
       infer:
         - '**/*.py'
         - '**/*.json'
+
 portForward:
 - resourceType: service
   resourceName: document-status-service
   port: 80
   localPort: 8894
-deploy:
-  kubectl: { }
-manifests:
-  kustomize:
-    paths:
-    - ./kustomize/minikube
+
 profiles:
-- name: custom
-  build:
-    googleCloudBuild: {}
-    artifacts:
-    - image: document-status-service
-      requires:
-      - image: common
-        alias: BASE_IMG
-  deploy:
-    kubectl: { }
-  manifests:
-    kustomize:
-      paths:
-      - ./kustomize/custom
-- name: prod_non_cloudbuild
-  deploy:
-    kubectl: { }
-  manifests:
-    kustomize:
-      paths:
-      - ./kustomize/prod
 - name: prod
   deploy:
     kubectl: { }
@@ -73,36 +50,33 @@ profiles:
     kustomize:
       paths:
       - ./kustomize/prod
-  build:
-    googleCloudBuild: {}
-    artifacts:
-    - image: document-status-service
-      docker:
-        cacheFrom:
-          - document-status-service
-          - document-status-service:latest
-      requires:
-      - image: common
-        alias: BASE_IMG
+    # Substitute system's environment vars to env.properties.rendered
+    hooks:
+      before:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c",
+                      "envsubst < env.properties > env.properties.rendered"]
+      after:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c", "rm env.properties.rendered"]
+
 - name: dev
-  build:
-    googleCloudBuild: {}
-    artifacts:
-    - image: document-status-service
-      docker:
-        cacheFrom:
-          - document-status-service
-          - document-status-service:latest
-      requires:
-        - image: common
-          alias: BASE_IMG
-      sync:
-        infer:
-          - '**/*.py'
-          - '**/*.json'
   deploy:
     kubectl: { }
   manifests:
     kustomize:
       paths:
       - ./kustomize/dev
+    # Substitute system's environment vars to env.properties.rendered
+    hooks:
+      before:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c",
+                      "envsubst < env.properties > env.properties.rendered"]
+      after:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c", "rm env.properties.rendered"]

@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,28 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: skaffold/v3
+apiVersion: skaffold/v4beta1
 kind: Config
 metadata:
   name: adp-ui
+
 build:
-  tagPolicy:
-    gitCommit: {}
-  local:
-    concurrency: 0
   artifacts:
   - image: adp-ui
+    docker:
+      cacheFrom:
+        - adp-ui
+        - adp-ui:latest
     sync:
       infer:
       - '**/*.js'
       - '**/*.json'
       - '**/*.css'
-deploy:
-  kubectl: { }
-manifests:
-  kustomize:
-    paths:
-    - ./kustomize/dev
+  googleCloudBuild: {}
+
 profiles:
 - name: prod
   deploy:
@@ -42,33 +39,33 @@ profiles:
     kustomize:
       paths:
       - ./kustomize/prod
-  build:
-    googleCloudBuild: {}
-    artifacts:
-    - image: adp-ui
-      docker:
-        cacheFrom:
-        - adp-ui
-        - adp-ui:latest
-        dockerfile: Dockerfile
+    # Substitute system's environment vars to env.properties.rendered
+    hooks:
+      before:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c",
+                      "envsubst < env.properties > env.properties.rendered"]
+      after:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c", "rm env.properties.rendered"]
+
 - name: dev
-  build:
-    googleCloudBuild: {}
-    artifacts:
-    - image: adp-ui
-      sync:
-        infer:
-          - '**/*.js'
-          - '**/*.json'
-          - '**/*.css'
-      docker:
-        cacheFrom:
-        - adp-ui
-        - adp-ui:latest
-        dockerfile: Dockerfile
   deploy:
     kubectl: { }
   manifests:
     kustomize:
       paths:
       - ./kustomize/dev
+    # Substitute system's environment vars to env.properties.rendered
+    hooks:
+      before:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c",
+                      "envsubst < env.properties > env.properties.rendered"]
+      after:
+        - host:
+            dir: ./kustomize/base
+            command: ["sh", "-c", "rm env.properties.rendered"]
