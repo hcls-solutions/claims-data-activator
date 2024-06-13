@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,33 +229,8 @@ function Upload() {
 					<Card.Body>
 						<Card.Text as='div'>
 							<Row className='customRow'>
-								<Col className="col-6">
-									<DragDropUpload className="dragdropuploadclass" onFileChange={fileRetrieve} />
-									{fileUploadSpinner ? <Spinner animation="border" variant="primary" /> : ''}
-
-								</Col>
-
-								<Col className="col-6">
-									<label className="labels"> Choose Program</label>
-									<select id="dropdown-basic-button" title="Choose Program" onChange={(e) => stateChange(e)} style={{ ...textInputsStyles }}>
-										<option></option>
-										{options.map(({ value, label }, index) => <option key={value} value={value} >{label}</option>)}
-									</select>
-									<br /><br />
-
-									{searchFlag ? '' : <>
-										<label className="labels">Case ID</label>
-										<input type="text" id='caseid' name="caseid" placeholder='Enter Case ID, or leave it blank to auto-generate a temporary Case ID' value={selectedCaseId} onChange={inputValueChanges} style={{ ...textInputsStyles }}
-										/>
-									</>}
-
-									<br /><br />
-									<FloatingLabel controlId="floatingTextarea" label="Notes" className="mb-3">
-										<Form.Control as="textarea" value={comments} onInput={e => setComment(e.target.value)} placeholder="Leave a comment here" style={{ ...textInputsStyles, height: '6rem' }} />
-									</FloatingLabel>
-
-									<label className="labels">Selected Application : {selectedCaseId === undefined || inputFlag === true ? '--' : selectedCaseId.caseid}</label>
-								</Col>
+								<DragDropUpload className="dragdropuploadclass" onFileChange={fileRetrieve} />
+								{fileUploadSpinner ? <Spinner animation="border" variant="primary" /> : ''}
 							</Row>
 						</Card.Text>
 					</Card.Body>

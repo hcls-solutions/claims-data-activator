@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,19 +24,6 @@ spec:
       - name: extraction-service
         image: extraction-service
         imagePullPolicy: Always
-        env:
-        - name: PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
+        envFrom:
+          - configMapRef:
               name: extraction-env-vars
-              key: PROJECT_ID
-        - name: EXTERNAL_DATA_PROJECT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: extraction-env-vars
-              key: EXTERNAL_DATA_PROJECT_ID
-        - name: DATABASE_PREFIX
-          valueFrom:
-            configMapKeyRef:
-              name: extraction-env-vars
-              key: DATABASE_PREFIX
