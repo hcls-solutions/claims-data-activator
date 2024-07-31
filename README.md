@@ -15,6 +15,7 @@
     * [Terraform Ingress](#terraform-ingress)
   * [Out of the box demo flow](#out-of-the-box-demo-flow)
     * [Working from the UI](#working-from-the-ui)
+    * [Triggering pipeline in a batch mode](#triggering-pipeline-in-a-batch-mode)
   * [Human In the Loop (HITL) Demo](#human-in-the-loop--hitl--demo)
   * [Connecting to the existing DocAI processors](#connecting-to-the-existing-docai-processors)
   * [Troubleshooting](#troubleshooting)
@@ -42,8 +43,9 @@
 ## About
 
 This is a quickstart version of the installation guide to get CDA up and running in a few simple steps. It helps install the CDA engine using public endpoint.
+For the advanced configuration options check this [guide](docs/AdvancedConfiguration.md).
 
-> Note: If you already have DocAI processors setup in a different project, refer to [Cross-project Setup](/docs/cross_project.md). `DOCAI_PROJECT_ID` should not be setup in the following steps.
+> Note: If you already have DocAI processors setup in a different project, refer to [Cross-project Setup](docs/cross_project.md). `DOCAI_PROJECT_ID` should not be setup in the following steps.
 
 ## Pre-requisites
 
@@ -55,22 +57,18 @@ This is a quickstart version of the installation guide to get CDA up and running
 | `skaffold`          | `>= v2.12.0`      | https://skaffold.dev/docs/install/                                                                                                                                                                 |
 | `kustomize`         | `>= v5.0.0`      | https://kubectl.docs.kubernetes.io/installation/kustomize/                                                                                                                                         |
 
-** Terraform > v1.7.4**
+**Terraform > v1.7.4**
 You will need to upgrade Cloud Shell (or local machine) terraform version using instructions [here](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 
 ### Create New Project
 * You will need access the GCP environment and project owner rights.
 * Installation will happen in the newly created project.
-* [Optional] If you want to setup DocAI processors in a separate project, then create another project.
+* [Optional] If you want to setup Document AI processors in a separate project (recommended), then you will need two separate projects.
 
 ## Installation
 ### Setting up
 
-* Get the Git Repo in the Cloud Shell:
-```shell
-git clone git@github.com:hcls-solutions/cda-light.git
-cd cda-light
-```
+* Get the Git Repo in the Cloud Shell
 
 * Set env variable for _PROJECT_ID_:
 
@@ -79,7 +77,11 @@ export PROJECT_ID=<YOUR_PROJECT_ID>
 gcloud config set project $PROJECT_ID
 ```
 
-* [Optional] Set env variable for _DOCAI_PROJECT_ID_:
+* [Optional] Set env variable for _DOCAI_PROJECT_ID_
+  When deploying processors to a different Project, you can set `DOCAI_PROJECT_ID`.
+  However, If you are deploying CDA engine and already have DOCAI project setup and
+  running as a result from the previous installation, DO NOT set `DOCAI_PROJECT_ID` variable and leave it blank.
+  Otherwise, terraform will fail, since it will try to create resources, which already were provisioned (and are owned by a different terraform run).
 
 ```shell
 export DOCAI_PROJECT_ID=<YOUR_DOCAI_PROJECT_ID>
@@ -90,7 +92,6 @@ export DOCAI_PROJECT_ID=<YOUR_DOCAI_PROJECT_ID>
 ```shell
 gcloud auth application-default login
 gcloud auth login
-gcloud auth application-default set-quota-project $PROJECT_ID
 ```
 
 * Reserve External IP:
@@ -185,6 +186,13 @@ After successfully execution, you should see line like this at the end:
 ```shell
 <...> Completed! Saved Log into /<...>/init_foundation.log
 ```
+
+> If Cloud shell times out during the operation, a workaround is to use `nohup` command to make sure a command does not exit when Cloud Shell times out.
+>
+>  ```shell
+>  nohup bash -c "time ./init_foundation.sh" &
+>  tail -f nohup.out
+>  ```
 
 ### Front End Config
 
@@ -337,7 +345,63 @@ This relies on the available out-of-the box Form parser.
 | 1Tw6wm3XEBn0PMVnYv6A | d1285180-d11d-11ee-adcf-4a83c9b583c0 | generic_form   | -1                   |              false | Non-urgent           | 2024-02-22T01:01:14.314760 | gs://cda-ek-test-07-document-upload/d1285180-d11d-11ee-adcf-4a83c9b583c0/1Tw6wm3XEBn0PMVnYv6A/form.pdf               | NULL            |       0.76 | Emergency Contact Phone                                                         | (906)334-8926                                              |
 +----------------------+--------------------------------------+----------------+----------------------+--------------------+----------------------+----------------------------+----------------------------------------------------------------------------------------------------------------------+-----------------+------------+---------------------------------------------------------------------------------+------------------------------------------------------------+
 ```
+
+> The setting for the default processor is done through the following configuration setting  "settings_config" -> "classification_default_label".  Explained in details in the [Configuring the System](#configuring-the-system).
+
+### Triggering pipeline in a batch mode
+*NB: Currently only pdf documents are supported, so if you have a jpg or png, please first convert it to pdf.*
+
+For example, to trigger pipeline to parse the sample form:
+```shell
+./start_pipeline.sh -d sample_data/bsc_demo/bsc-dme-pa-form-1.pdf  -l demo-batch
+```
+
+> The Pipeline is triggered when an empty file named START_PIPELINE is
+> uploaded to the `${PROJECT_ID}-pa-forms` GCS bucket. When the START_PIPELINE
+> document is uploaded, all `*.pdf`
+> files containing in that folder (including sub-folders) are sent to the processing queue.  
+> <br>
+> All documents within the same GCS folder are treated as related documents, will become part of same package (will share case_id). Current limitation with that logic is that only one document of certain type could be used. If there are multiple documents of same type, only one is marked active, others are marked as in-active, as if they were a replacement.
+> This is legacy business logic, subject to change in case it really becomes an obstacle.
+> <br>
+>
+> When processed, documents are copied to `gs://${PROJECT_ID}-document-upload` with unique identifiers.
+>
+> Wrapper script to upload each document as a standalone application inside `${PROJECT_ID}-pa-forms`:
+> ```shell
+> ./start_pipeline.sh -d <local-dir-with-forms>  -l <batch-name>
+> ```
+>
+> Or send all documents within the directory as single Application with same Case ID:
+> ```shell
+> ./start_pipeline.sh -d <local-dir-with-forms> -l <batch-name> -p
+> ```
+>
+> Or send a pdf document by name:
+> ```shell
+> ./start_pipeline.sh -d <local-dir-with-forms>/<my_doc>.pdf  -l <batch-name>
+> ```
+>
+> Alternatively, send a single document to processing:
+> - Upload *pdf* form to the gs://<PROJECT_ID>-pa-forms/my_dir and
+> - Drop empty START_PIPELINE file to trigger the pipeline execution.
+    > After putting START_PIPELINE, the pipeline is automatically triggered  to process  all PDF documents inside the gs://${PROJECT_ID}-pa-forms/<mydir> folder.
+>
+> ```shell
+> gsutil cp  <my-local-dir>/<my_document>.pdf
+> gsutil cp START_PIPELINE gs://${PROJECT_ID}-pa-forms/<my-dir>/
+> touch START_PIPELINE
+> gsutil cp START_PIPELINE gs://${PROJECT_ID}-pa-forms/<my-dir>/
+> ```
+
+
 ## Human In the Loop (HITL) Demo
+
+Using Frontend UI it is possible to review and correct the data extracted by the DocAI.
+Documents with low confidence score are marked for the Review Process.
+
+Corrected values are saved to the BigQuery and could be retrieved using sample query.
+
 * Go to Claims Data Activator main page.
 * Click on View for one of the Forms.
 * Correct values to one of the Fields and submit **Save** button.
