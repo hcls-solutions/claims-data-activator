@@ -26,6 +26,9 @@ from google.cloud import documentai_v1 as documentai
 from google.cloud import storage
 storage_client = storage.Client()
 
+
+logger = Logger.get_logger(__name__)
+
 PDF_MIME_TYPE = "application/pdf"
 
 router = APIRouter()
@@ -45,18 +48,18 @@ async def get_config_by_name(name=None):
 
   try:
     # Fetching only active documents
-    Logger.info(f"get_config called for {name}")
+    logger.info(f"get_config called for {name}")
     config = get_config(name)
-    Logger.info(f"get_config config={config}")
+    logger.info(f"get_config config={config}")
     response = SUCCESS_RESPONSE
     response["data"] = config
     return response
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in get_document_types_config") from e
 
@@ -78,7 +81,7 @@ async def batch_processing(parser_details):
 
     location = "us"
     if not location:
-      Logger.error(f"Unidentified location for parser {processor_path}")
+      logger.error(f"Unidentified location for parser {processor_path}")
       return
 
     opts = {"api_endpoint": f"{location}-documentai.googleapis.com"}
@@ -107,8 +110,8 @@ async def batch_processing(parser_details):
   output_config = documentai.DocumentOutputConfig(
       gcs_output_config={"gcs_uri": gcs_output_uri})
 
-  Logger.info(f"batch_extraction - input_config = {input_config}")
-  Logger.info(f"batch_extraction - output_config = {output_config}")
+  logger.info(f"batch_extraction - input_config = {input_config}")
+  logger.info(f"batch_extraction - output_config = {output_config}")
 
 
   # request for Doc AI
@@ -181,13 +184,13 @@ def form_parser(future, operation, result):
     for blob in output_blobs:
       # Document AI should only output JSON files to GCS
       if ".json" not in blob.name:
-        Logger.warning(
+        logger.warning(
             f"batch_extraction - Skipping non-supported file: {blob.name} - Mimetype: {blob.content_type}"
         )
         continue
       blob_count = blob_count + 1
       # Download JSON File as bytes object and convert to Document Object
-      Logger.info(
+      logger.info(
           f"batch_extraction - Adding {blob_count} gs://{output_bucket}/{blob.name}")
       document = documentai.Document.from_json(
           blob.download_as_bytes(), ignore_unknown_fields=True
@@ -197,7 +200,7 @@ def form_parser(future, operation, result):
         documents[input_gcs_source] = []
       documents[input_gcs_source].append(document)
 
-  Logger.info(
+  logger.info(
       f"batch_extraction - Loaded {sum([len(documents[x]) for x in documents if isinstance(documents[x], list)])} DocAI document objects retrieved from json. ")
 
   return documents

@@ -15,11 +15,6 @@ limitations under the License.
 """
 
 
-"""
-This script is for postprocessing the extracted OCR output.
-The configuration file for the script is post_processing_config.py
-"""
-
 import re
 import datetime
 from datetime import datetime
@@ -28,6 +23,13 @@ from .post_processing_config import str_to_num_dict, num_to_str_dict, \
   upper_to_lower_list, clean_space_list, date_format_dict,\
   convert_to_string, convert_to_number
 from common.utils.logging_handler import Logger
+
+"""
+This script is for postprocessing the extracted OCR output.
+The configuration file for the script is post_processing_config.py
+"""
+
+logger = Logger.get_logger(__name__)
 
 def list_to_string(string_list):
   '''Function to join a list of string characters to a single string
@@ -187,10 +189,10 @@ def get_date_in_format(input_date_format, output_date_format, value):
           .strftime(output_date_format)  # 2022-02-02
     except Exception as e:  # pylint: disable=broad-except
       # if any error in date format no change in input date
-      Logger.error("Error occurred in the date format so "
+      logger.error("Error occurred in the date format so "
                    "keeping existed date only")
       new_date = value
-      Logger.error(e)
+      logger.error(e)
   return new_date
 
 def correction_script(corrected_dict, template):
@@ -327,8 +329,8 @@ def data_transformation(input_dict):
       temp_dict[index] = corrected_dict
     return input_dict, temp_dict
   except Exception as e:  # pylint: disable=broad-except
-    Logger.error(f"Error in the date tranformation postprocessing {e}")
-    Logger.error(e)
+    logger.error(f"Error in the date tranformation postprocessing {e}")
+    logger.error(e)
     return None,None
 
 # Function call

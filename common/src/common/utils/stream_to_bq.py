@@ -21,6 +21,8 @@ from .logging_handler import Logger
 from common.config import PROJECT_ID, DATABASE_PREFIX, BIGQUERY_DB
 import datetime
 
+logger = Logger.get_logger(__name__)
+
 
 def stream_claim_to_bigquery(client, claim_dict, operation, timestamp):
   table_id = f"{PROJECT_ID}.{DATABASE_PREFIX}rules_engine.claims"
@@ -36,10 +38,10 @@ def stream_claim_to_bigquery(client, claim_dict, operation, timestamp):
   # Make an API request
   errors = client.insert_rows_json(table_id, rows_to_insert)
   if errors == []:
-    Logger.info("New rows have been added.")
+    logger.info("New rows have been added.")
   elif isinstance(errors, list):
     error = errors[0].get("errors")
-    Logger.error(f"Encountered errors while inserting rows: {error}")
+    logger.error(f"Encountered errors while inserting rows: {error}")
 
 
 def delete_claim_in_bigquery(client, claim_id, timestamp):
@@ -51,10 +53,10 @@ def delete_claim_in_bigquery(client, claim_id, timestamp):
   # Make an API request
   errors = client.insert_rows_json(table_id, rows_to_insert)
   if not errors:
-    Logger.info("New rows have been added.")
+    logger.info("New rows have been added.")
   elif isinstance(errors, list):
     error = errors[0].get("errors")
-    Logger.error(f"Encountered errors while inserting rows: {error}")
+    logger.error(f"Encountered errors while inserting rows: {error}")
 
 
 def stream_document_to_bigquery(client, case_id, uid,
@@ -73,7 +75,7 @@ def stream_document_to_bigquery(client, case_id, uid,
       if fails : returns error
   """
   table_id = f"{PROJECT_ID}.{DATABASE_PREFIX}{BIGQUERY_DB}"
-  Logger.info(f"stream_document_to_bigquery case_id={case_id}, uid={uid}, "
+  logger.info(f"stream_document_to_bigquery case_id={case_id}, uid={uid}, "
               f"document_class={document_class}, document_type={document_type}, "
               f"table_id={table_id}, gcs_doc_path={gcs_doc_path}, "
               f"ocr_text={ocr_text}, classification_score={classification_score},"
@@ -95,10 +97,10 @@ def stream_document_to_bigquery(client, case_id, uid,
   ]
   errors = client.insert_rows_json(table_id, rows_to_insert)
   if not errors:
-    Logger.info(f"New rows have been added for "
+    logger.info(f"New rows have been added for "
                 f"case_id {case_id} and {uid}")
   elif isinstance(errors, list):
     error = errors[0].get("errors")
-    Logger.error(f"Encountered errors while inserting rows "
+    logger.error(f"Encountered errors while inserting rows "
                  f"for case_id {case_id} and uid {uid}: {error}")
   return errors

@@ -1,5 +1,5 @@
 """
-Copyright 2023 Google LLC
+Copyright 2024 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from common import models
 import pandas as pd
 
 storage_client = storage.Client()
+logger = Logger.get_logger(__name__)
 
 
 def split_uri_2_bucket_prefix(uri: str):
@@ -50,12 +51,11 @@ def get_id_from_file_path(uri: str):
 def get_document_by_uri(uri: str):
   case_id, uid = get_id_from_file_path(uri)
   if uid is None:
-    Logger.error(f"get_document_by_uri - Could not retrieve uid from uri {uri}")
+    logger.error(f"Could not retrieve uid from uri {uri}")
     return None
   db_document = models.Document.find_by_uid(uid)
   if db_document is None:
-    Logger.error(f"get_document_by_uri - Could not retrieve document by uid "
-                 f"{uid} ")
+    logger.error(f"Could not retrieve document by uid {uid} ")
 
   return db_document
 

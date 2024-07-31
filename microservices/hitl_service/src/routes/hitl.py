@@ -41,6 +41,7 @@ from common.db_client import bq_client
 # pylint: disable = broad-except
 from common.utils.format_data_for_bq import format_data_for_bq
 
+logger = Logger.get_logger(__name__)
 bq = bq_client()
 
 router = APIRouter()
@@ -68,7 +69,7 @@ def get_doc_list_data(docs_list: list):
 
   for doc in docs_list:
     start_time_int = time.time()
-    Logger.debug(f"get_doc_list_data for {doc['uid']} {doc}")
+    logger.debug(f"get_doc_list_data for {doc['uid']} {doc}")
     # name = "N/A"
     # if doc["entities"]:
     #   for entity in doc["entities"]:
@@ -78,7 +79,7 @@ def get_doc_list_data(docs_list: list):
     #       elif entity["value"] is not None:
     #         name = entity["value"]
     # doc["applicant_name"] = name
-    # Logger.debug(
+    # logger.debug(
     #   f"get_doc_list_data - 1. Time elapsed: {str(round((time.time() - start_time_int) * 1000))} ms")
     start_time_int = time.time()
 
@@ -90,7 +91,7 @@ def get_doc_list_data(docs_list: list):
     document_display_name = None
     if doc["document_display_name"] is None:
       try:
-        Logger.debug(
+        logger.debug(
             f"One time action to repair existing documents and set document_display_name for {doc}")
         if document_class is not None:
           document_display_name = get_display_name_by_doc_class(document_class)
@@ -104,11 +105,11 @@ def get_doc_list_data(docs_list: list):
         document.document_display_name = document_display_name
         document.update()
         doc["document_display_name"] = document_display_name
-        Logger.debug(
+        logger.debug(
             f"get_doc_list_data - 2. Time elapsed:  {str(round((time.time() - start_time_int) * 1000))} ms")
         start_time_int = time.time()
       except Exception as e:
-        Logger.error(
+        logger.error(
           f"Error while setting document_display_name for {doc} - {e}")
 
     process_stage = "-"
@@ -134,7 +135,7 @@ def get_doc_list_data(docs_list: list):
     hitl_status = doc.get("hitl_status", None)
     last_hitl_status = hitl_status[-1] if hitl_status else None
 
-    Logger.debug(
+    logger.debug(
         f"get_doc_list_data - 3. Time elapsed: {str(round((time.time() - start_time_int) * 1000))} ms")
     start_time_int = time.time()
     if doc["system_status"]:
@@ -181,7 +182,7 @@ def get_doc_list_data(docs_list: list):
         else:
           current_status = STATUS_ERROR
 
-    Logger.debug(
+    logger.debug(
         f"get_doc_list_data - 5. Time elapsed: {str(round((time.time() - start_time_int) * 1000))} ms")
     start_time_int = time.time()
     # Show next stage process status.
@@ -206,7 +207,7 @@ def get_doc_list_data(docs_list: list):
     doc["audit_trail"] = audit_trail
     # print(f"get_doc_list_data after magic for {doc['uid']} {doc}")
 
-  Logger.debug(
+  logger.debug(
       f"get_doc_list_data - Total Time elapsed: {str(round((time.time() - start_time) * 1000))} ms")
   return docs_list
 
@@ -228,23 +229,23 @@ async def report_data():
             Document.collection.filter(active="active").fetch()))
     docs_list = sorted(
         docs_list, key=lambda i: i["upload_timestamp"], reverse=True)
-    Logger.debug(
+    logger.debug(
       f"Fetched Active Data len={len(docs_list)} in  {str(round((time.time() - start_time) * 1000))} ms")
     docs_list = get_doc_list_data(docs_list)
-    Logger.debug(
+    logger.debug(
         f"report_data - Time elapsed: {str(round((time.time() - start_time) * 1000))} ms")
-    Logger.debug(f"report_data docs_list len={len(docs_list)}")
+    logger.debug(f"report_data docs_list len={len(docs_list)}")
     response = {"status": STATUS_SUCCESS, "len": len(docs_list),
                 "data": docs_list}
-    Logger.info(
+    logger.info(
         f"report_data - Time elapsed: {str(round((time.time() - start_time) * 1000))} ms")
     return response
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in fetching documents") from e
 
@@ -270,9 +271,9 @@ async def get_document(uid: str):
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in fetching documents") from e
 
@@ -313,7 +314,7 @@ async def get_queue(hitl_status: str):
     result_queue = filter(filter_status, result_queue)
     result_queue = sorted(
         result_queue, key=lambda i: i["upload_timestamp"], reverse=True)
-    Logger.debug(f"get_queue result_queue={result_queue}")
+    logger.debug(f"get_queue result_queue={result_queue}")
 
     response = {"status": STATUS_SUCCESS, "len": len(result_queue),
                 "data": result_queue}
@@ -321,9 +322,9 @@ async def get_queue(hitl_status: str):
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error during fetching from Firestore") from e
 
@@ -338,14 +339,14 @@ async def update_entity(uid: str, updated_doc: dict):
     Returns 500 : If something fails
   """
   try:
-    Logger.info(f"update_entity with uid={uid}, updated_doc={updated_doc}")
+    logger.info(f"update_entity with uid={uid}, updated_doc={updated_doc}")
     doc = Document.find_by_uid(uid)
     if not doc or not doc.to_dict()["active"].lower() == "active":
       response = {"status": STATUS_ERROR,
                   "detail": "No Document found with the given uid"}
       return response
     doc.entities = updated_doc["entities"]
-    Logger.info(f"entities={updated_doc['entities']}")
+    logger.info(f"entities={updated_doc['entities']}")
     doc.update()
     client = bq_client()
 
@@ -363,9 +364,9 @@ async def update_entity(uid: str, updated_doc: dict):
                                                      "classification_score"],
                                                    updated_doc["is_hitl_classified"])
     if not bq_update_status:
-      Logger.info(f"returned status {bq_update_status}")
+      logger.info(f"returned status {bq_update_status}")
     else:
-      Logger.error(
+      logger.error(
           f"Failed streaming to BQ,  returned status {bq_update_status}")
       return {"status": FAILED_RESPONSE}
 
@@ -373,9 +374,9 @@ async def update_entity(uid: str, updated_doc: dict):
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Unable to update entity") from e
 
@@ -423,9 +424,9 @@ async def update_hitl_status(uid: str,
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="STATUS_ERROR to update hitl status") from e
 
@@ -478,17 +479,17 @@ async def fetch_file(case_id: str, uid: str, download: Optional[bool] = False):
 
   except FileNotFoundError as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=404, detail="Requested file not found") from e
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500,
         detail="Couldn't fetch the requested file.\
@@ -519,12 +520,12 @@ async def get_unclassified():
         result_queue, key=lambda i: i["upload_timestamp"], reverse=True)
     response["len"] = len(result_queue)
     response["data"] = result_queue
-    Logger.info(f"get_unclassified result_queue={result_queue}")
+    logger.info(f"get_unclassified result_queue={result_queue}")
     return response
   except Exception as e:
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500,
         detail="Error during getting unclassified documents") from e
@@ -574,7 +575,7 @@ def call_process_task(case_id: str, uid: str, document_class: str, gcs_uri: str,
   base_url = f"http://upload-service/upload_service/v1/process_task" \
              f"?is_hitl={True}"
   print("params for process task", base_url, payload)
-  Logger.info(f"Params for process task {payload}")
+  logger.info(f"Params for process task {payload}")
   response = requests.post(base_url, json=payload)
   return response
 
@@ -592,7 +593,7 @@ async def update_hitl_classification(case_id: str, uid: str,
   Returns 500: If something fails
   """
   try:
-    Logger.info(
+    logger.info(
       f"update_hitl_classification with case_id={case_id}, uid={uid}, document_class={document_class}")
     doc = Document.find_by_uid(uid)
 
@@ -608,29 +609,29 @@ async def update_hitl_classification(case_id: str, uid: str,
                                                      doc.classification_score,
                                                      doc.is_hitl_classified)
       if not bq_update_status:
-        Logger.info(
+        logger.info(
             f"extraction_api - Successfully streamed data to BQ ")
       else:
-        Logger.error(
+        logger.error(
             f"extraction_api - Failed streaming to BQ, returned status {bq_update_status}")
 
     if doc.document_class != document_class:
-      Logger.debug(doc.to_dict()["active"].lower())
+      logger.debug(doc.to_dict()["active"].lower())
       if not doc or not doc.to_dict()["active"].lower() == "active":
-        Logger.error("Document for hitl classification not found")
+        logger.error("Document for hitl classification not found")
         raise HTTPException(status_code=404, detail="Document not found")
 
       document_types_config = get_document_types_config()
       if document_class not in document_types_config.keys():
-        Logger.error(f"Invalid parameter document_class {document_class}")
+        logger.error(f"Invalid parameter document_class {document_class}")
         raise HTTPException(
             status_code=400, detail="Invalid Parameter. Document class")
 
-      Logger.info(f"Starting manual classification for case_id" \
+      logger.info(f"Starting manual classification for case_id" \
                   f" {case_id} and uid {uid}")
 
       # Update DSM
-      Logger.info("Updating Doc status from Hitl classification for case_id" \
+      logger.info("Updating Doc status from Hitl classification for case_id" \
                   f"{case_id} and uid {uid}")
       response = update_classification_status(
           case_id,
@@ -638,14 +639,14 @@ async def update_hitl_classification(case_id: str, uid: str,
           STATUS_SUCCESS,
           document_class=document_class
       )
-      Logger.debug(response)
+      logger.debug(response)
       if response.status_code != 200:
-        Logger.error(f"Document status update failed for {case_id} and {uid}")
+        logger.error(f"Document status update failed for {case_id} and {uid}")
         raise HTTPException(
             status_code=500, detail="Document status update failed")
 
       # Call Process task
-      Logger.info("Starting Process task from hitl classification")
+      logger.info("Starting Process task from hitl classification")
       res = call_process_task(case_id, uid, document_class,
                               doc.url, doc.context)
       if res.status_code == 202:
@@ -656,16 +657,16 @@ async def update_hitl_classification(case_id: str, uid: str,
 
   except HTTPException as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise e
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500,
         detail="Couldn't update the classification.\
@@ -804,15 +805,15 @@ async def search(search_term: SearchPayload):
 
   except HTTPException as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise e
 
   except Exception as e:
     print(e)
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error occurred in search") from e

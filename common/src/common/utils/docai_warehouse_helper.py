@@ -28,6 +28,8 @@ from common.utils.document_ai_utils import get_key_values_dic
 from common.utils.logging_handler import Logger
 from .document_warehouse_utils import DocumentWarehouseUtils
 
+logger = Logger.get_logger(__name__)
+
 
 def get_key_value_pairs(document_ai_output):
   json_string = proto.Message.to_json(document_ai_output)
@@ -88,7 +90,7 @@ def extract_entities_as_properties(
 
     return properties
 
-from google.protobuf.json_format import MessageToJson
+
 def get_metadata_properties(key_values, schema) -> List[
   contentwarehouse_v1.Property]:
   def get_type_using_schema(property_name):
@@ -104,7 +106,7 @@ def get_metadata_properties(key_values, schema) -> List[
   for key, value in key_values:
     value_type = get_type_using_schema(key)
     if value_type is not None:
-      Logger.info(f"get_metadata_properties key={key}, value={value}, type={value_type}")
+      logger.info(f"get_metadata_properties key={key}, value={value}, type={value_type}")
       one_property = contentwarehouse_v1.Property()
       one_property.name = key
 
@@ -129,17 +131,16 @@ def get_metadata_properties(key_values, schema) -> List[
                                      utc_offset={})
           one_property.date_time_values = contentwarehouse_v1.DateTimeArray(values=[dt])
         else:
-          Logger.warning(
+          logger.warning(
               f"Unsupported property type {value_type} for  {key} = {value} Skipping. ")
           continue
         metadata_properties.append(one_property)
 
       except Exception as ex:
-        Logger.warning(f"Could not load {key} = {value} of type {value_type} as property. Skipping. Exception = {ex}")
+        logger.warning(f"Could not load {key} = {value} of type {value_type} as property. Skipping. Exception = {ex}")
         continue
     else:
-      Logger.warning((f"get_metadata_properties key={key}, value={value}, Type not detected"))
-
+      logger.warning((f"get_metadata_properties key={key}, value={value}, Type not detected"))
 
   return metadata_properties
 
@@ -153,7 +154,7 @@ def process_document(project_number: str,
                      bucket_name: str, document_path: str,
                      document_ai_output):
   try:
-    Logger.info(f"process_document with project_number={project_number}, "
+    logger.info(f"process_document with project_number={project_number}, "
                 f"api_location={api_location}, folder_id={folder_id}, "
                 f"display_name={display_name}, document_schema_id="
                 f"{document_schema_id}, caller_user={caller_user}, "
@@ -174,7 +175,7 @@ def process_document(project_number: str,
         caller_user_id=caller_user,
         metadata_properties=metadata_properties)
 
-    Logger.info(f"process_document create_document_response"
+    logger.info(f"process_document create_document_response"
                 f"={create_document_response}")
     if create_document_response is not None:
       document_id = create_document_response.document.name.split("/")[-1]
@@ -184,10 +185,10 @@ def process_document(project_number: str,
           document_id=document_id,
           folder_document_id=folder_id,
           caller_user_id=caller_user)
-      Logger.info(f"process_document link_document_response"
+      logger.info(f"process_document link_document_response"
                   f"={link_document_response}")
   except Exception as e:
-    Logger.error(
+    logger.error(
         f"process_document - Error for {document_path}:  {e}")
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)

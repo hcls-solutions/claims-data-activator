@@ -30,6 +30,7 @@ from google.cloud import storage
 from commmon.utils.logging_handler import Logger
 from common.config import PATH,BUCKET_NAME_VALIDATION,PATH_TEMPLATE,PROJECT_ID
 file_name=PATH.rsplit('/', 1)[-1]
+logger = Logger.get_logger(__name__)
 
 
 def parsers():
@@ -308,18 +309,18 @@ def main():
   try:
     data = read_json(PATH_TEMPLATE)
   except FileNotFoundError:
-    Logger.info(f"Template File Does not exist or the file path is incorrect")
+    logger.info(f"Template File Does not exist or the file path is incorrect")
     return
   if args.view:
     try:
       data = read_json(PATH)
     #Iterating on the rules to print one by one
       for i in data[args.doc_type]:
-        Logger.info(f"{i} : {data[args.doc_type][i]}")
+        logger.info(f"{i} : {data[args.doc_type][i]}")
     except FileNotFoundError:
-      Logger.info(f"File Does not exist or the file path is incorrect")
+      logger.info(f"File Does not exist or the file path is incorrect")
     except KeyError:
-      Logger.info(f"Document Name is incorrect")
+      logger.info(f"Document Name is incorrect")
     return
 
 
@@ -331,14 +332,14 @@ def main():
       upload_bucket()
       os.remove(file_name)
     except FileNotFoundError:
-      Logger.info(f"File Does not exist or the file path is incorrect")
+      logger.info(f"File Does not exist or the file path is incorrect")
     return
   params = get_params(args)
   template = load_template(data,args)
   try:
     jinn = prep_sql(template,params)
   except TypeError as e:
-    Logger.info(f"Incorrect Input Format")
+    logger.info(f"Incorrect Input Format")
     return
   data = update_json(jinn,args)
   dump_updated_json(data)

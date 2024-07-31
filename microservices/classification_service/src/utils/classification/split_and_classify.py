@@ -40,6 +40,7 @@ from common.utils.helper import get_id_from_file_path
 from common.utils.logging_handler import Logger
 from .download_pdf_gcs import download_pdf_gcs
 
+logger = Logger.get_logger(__name__)
 PDF_EXTENSION = ".pdf"
 
 storage_client = storage.Client()
@@ -47,7 +48,7 @@ storage_client = storage.Client()
 
 async def batch_classification(processor: documentai.types.processor.Processor,
     dai_client, input_uris: List[str]):
-  Logger.info(f"batch_classification - input_uris = {input_uris}")
+  logger.info(f"batch_classification - input_uris = {input_uris}")
   input_docs = [documentai.GcsDocument(gcs_uri=doc_uri, mime_type=PDF_MIME_TYPE)
                 for doc_uri in list(input_uris)]
   gcs_documents = documentai.GcsDocuments(documents=input_docs)
@@ -69,9 +70,9 @@ async def batch_classification(processor: documentai.types.processor.Processor,
   output_config = documentai.DocumentOutputConfig(
       gcs_output_config={"gcs_uri": destination_uri})
 
-  Logger.info(f"batch_classification - input_config = {input_config}")
-  Logger.info(f"batch_classification - output_config = {output_config}")
-  Logger.info(
+  logger.info(f"batch_classification - input_config = {input_config}")
+  logger.info(f"batch_classification - output_config = {output_config}")
+  logger.info(
       f"batch_classification - Calling DocAI API for {len(input_uris)} document(s) "
       f" using {processor.display_name} processor "
       f"type={processor.type_}, path={processor.name}")
@@ -91,7 +92,7 @@ async def batch_classification(processor: documentai.types.processor.Processor,
   # metadata = documentai.BatchProcessMetadata(operation.metadata)
   operation.add_done_callback(
       get_callback_fn())
-  Logger.info(
+  logger.info(
       f"batch_classification - DocAI extraction operation started in the background as LRO")
 
 
@@ -113,16 +114,16 @@ def get_callback_fn():
         # The Cloud Storage API requires the bucket name and URI prefix separately
         matches = re.match(r"gs://(.*?)/(.*)", process.output_gcs_destination)
         if not matches:
-          Logger.warning(
+          logger.warning(
               f"post_process_classify - "
               f"Could not parse output GCS destination:[{process.output_gcs_destination}]")
-          Logger.warning(f"post_process_classify - {process.status}")
+          logger.warning(f"post_process_classify - {process.status}")
           continue
 
         output_bucket, output_prefix = matches.groups()
         output_gcs_destination = process.output_gcs_destination
         input_gcs_source = process.input_gcs_source
-        Logger.info(
+        logger.info(
             f"post_process_classify - output_bucket = {output_bucket}, "
             f"output_prefix={output_prefix}, "
             f"input_gcs_source = {input_gcs_source}, "
@@ -138,18 +139,18 @@ def get_callback_fn():
         for blob in output_blobs:
           # Document AI should only output JSON files to GCS
           if ".json" not in blob.name:
-            Logger.info(
+            logger.info(
                 f"post_process_classify - Skipping non-supported file: {blob.name} - Mimetype: {blob.content_type}"
             )
             continue
 
           # Download JSON File as bytes object and convert to Document Object
-          Logger.info(f"Fetching gs://{output_bucket}/{blob.name}")
+          logger.info(f"Fetching gs://{output_bucket}/{blob.name}")
           document = documentai.Document.from_json(
               blob.download_as_bytes(), ignore_unknown_fields=True
           )
           dirs, file_name = helper.split_uri_2_path_filename(input_gcs_source)
-          Logger.info(
+          logger.info(
               f"post_process_classify - dirs = {dirs}, file_name = {file_name}")
 
           entities = document.entities
@@ -181,7 +182,7 @@ def get_callback_fn():
             labels.append(label)
             pages.append((start, end))
 
-            Logger.info(
+            logger.info(
                 f"post_process_classify - Classification result for {input_gcs_source}: "
                 f"document_class={label}, confidence={score}, "
                 f"start={start}, end={end}")
@@ -191,9 +192,9 @@ def get_callback_fn():
                                          'pages': pages}
 
       except Exception as ex:
-        Logger.error(ex)
+        logger.error(ex)
         err = traceback.format_exc().replace("\n", " ")
-        Logger.error(err)
+        logger.error(err)
 
     # Classification
     classification_dic = {}
@@ -217,7 +218,7 @@ def get_documents_for_extraction(classification_dic, extraction_dic):
   def add_extraction_item(doc_class, dic, uuid):
     parser_name = common.config.get_parser_name_by_doc_class(doc_class)
     if parser_name is None:
-      Logger.error(
+      logger.error(
           f"Parser is unknown for document_class = {predicted_class}")
     if parser_name not in dic:
       dic[parser_name] = []
@@ -314,7 +315,7 @@ def split_documents(document_info: Dict, gcs_url: str):
   pdf_path = os.path.join(output_dir, os.path.basename(gcs_url))
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-  Logger.info(
+  logger.info(
       f"split using source file with file_path={gcs_url} and output_dir={output_dir}")
 
   # Split and save locally
@@ -332,18 +333,18 @@ def split_documents(document_info: Dict, gcs_url: str):
         output_dir,
         f"{page_range}_{predicted_class}_{os.path.basename(gcs_url)}")
 
-    Logger.info(f"start = {start}, end = {end}, subdoc_type={predicted_class}, "
+    logger.info(f"start = {start}, end = {end}, subdoc_type={predicted_class}, "
                 f"page_range={page_range},"
                 f" output_filename={output_filename}")
 
     try:
-      Logger.info(f'Downloading from {gcs_url} to {pdf_path}')
+      logger.info(f'Downloading from {gcs_url} to {pdf_path}')
       download_pdf_gcs(gcs_uri=gcs_url,
                        output_filename=pdf_path)
       with Pdf.open(pdf_path) as original_pdf:
-        Logger.info(
+        logger.info(
             f"Creating: {output_filename} (confidence: {predicted_score})")
-        Logger.info(f"original_pdf.pages={original_pdf.pages}")
+        logger.info(f"original_pdf.pages={original_pdf.pages}")
         subdoc = Pdf.new()
         for page_num in range(start, end + 1):
           subdoc.pages.append(original_pdf.pages[page_num])
@@ -358,8 +359,8 @@ def split_documents(document_info: Dict, gcs_url: str):
         split_files.append((output_filename, predicted_class, predicted_score))
 
     except Exception as e:
-      Logger.error(f"Error while splitting document {pdf_path}")
-      Logger.error(e)
+      logger.error(f"Error while splitting document {pdf_path}")
+      logger.error(e)
       print(e)
 
   return split_files

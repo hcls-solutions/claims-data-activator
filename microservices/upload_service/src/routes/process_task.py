@@ -30,6 +30,7 @@ from common.utils.logging_handler import Logger
 router = APIRouter()
 SUCCESS_RESPONSE = {"status": STATUS_SUCCESS}
 FAILED_RESPONSE = {"status": STATUS_ERROR}
+logger = Logger.get_logger(__name__)
 
 
 @router.post("/process_task", status_code=status.HTTP_202_ACCEPTED, )
@@ -50,7 +51,7 @@ async def process_task(payload: ProcessTask,
     """
 
   payload = payload.dict()
-  Logger.info(f"Processing the documents: {payload}")
+  logger.info(f"Processing the documents: {payload}")
 
   # Run the pipeline in the background
   background_task.add_task(run_pipeline, payload, is_hitl, is_reassign)

@@ -26,6 +26,7 @@ from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR
 # disabling for linting to pass
 # pylint: disable = broad-except
 
+logger = Logger.get_logger(__name__)
 router = APIRouter(prefix="/validation")
 SUCCESS_RESPONSE = {"status": STATUS_SUCCESS}
 FAILED_RESPONSE = {"status": STATUS_ERROR}
@@ -46,7 +47,7 @@ async def validation(case_id: str, uid: str, doc_class: str,
     """
   validation_status = STATUS_ERROR
   try:
-    Logger.info(f"Validation called for case_id={case_id}, uid={uid}, "
+    logger.info(f"Validation called for case_id={case_id}, uid={uid}, "
                 f"doc_class={doc_class}, entities={entities}")
     validation_output = get_values(doc_class, case_id, uid, entities)
     #The output of get_values is a tuple if executed successfully
@@ -57,14 +58,14 @@ async def validation(case_id: str, uid: str, doc_class: str,
       validation_status = STATUS_SUCCESS
       update_validation_status(case_id, uid, validation_score,
                                validation_status, validation_entities)
-      Logger.info(f"Validation Score for cid:{case_id}, uid: {uid},"
+      logger.info(f"Validation Score for cid:{case_id}, uid: {uid},"
                   f" doc_class:{doc_class} is {validation_score}")
       return {"status": validation_status, "score": validation_score}
     #Else condition works if the get_values function returns None
     else:
       validation_status = STATUS_ERROR
       update_validation_status(case_id, uid, None, validation_status, entities)
-      Logger.error(f"Validation failed for case_id:{case_id}, uid: {uid},"
+      logger.error(f"Validation failed for case_id:{case_id}, uid: {uid},"
                    f" doc_class:{doc_class}")
       response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
       response.body = f"Validation failed for case_id {case_id}" \
@@ -73,7 +74,7 @@ async def validation(case_id: str, uid: str, doc_class: str,
 
   except Exception as error:
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     print(err)
 
     update_validation_status(case_id, uid, None, validation_status, entities)

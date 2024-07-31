@@ -33,7 +33,7 @@ from common.config import STATUS_IN_PROGRESS, STATUS_SUCCESS, STATUS_ERROR
 
 # pylint: disable = broad-except ,literal-comparison
 router = APIRouter()
-
+logger = Logger.get_logger(__name__)
 
 @router.post("/upload_files")
 async def upload_file(
@@ -57,7 +57,7 @@ async def upload_file(
   #checking if all uploaded files are pdf documents
   for file in files:
     if not file.filename.lower().endswith(".pdf"):
-      Logger.error("Uploaded file is not a pdf document")
+      logger.error("Uploaded file is not a pdf document")
       raise HTTPException(
           status_code=422, detail="Please upload"
           " all pdf files")
@@ -92,7 +92,7 @@ async def upload_file(
             status_code=500,
             detail="Error "
             "in uploading document in gcs bucket")
-      Logger.info(f"File with case_id {case_id} and uid {uid}"
+      logger.info(f"File with case_id {case_id} and uid {uid}"
                   f" uploaded successfully in GCS bucket")
       #Update the document upload as success in DB
       document = Document.find_by_uid(uid)
@@ -117,7 +117,7 @@ async def upload_file(
     pubsub_msg = f"batch for {case_id} moved to bucket"
     message_dict = {"message": pubsub_msg, "message_list": message_list}
     publish_document(message_dict)
-    Logger.info(f"Files with case id {case_id} uploaded"
+    logger.info(f"Files with case id {case_id} uploaded"
                 f" successfully")
     return {
         "status": f"Files with case id {case_id} uploaded"
@@ -128,9 +128,9 @@ async def upload_file(
         "configs": message_list
     }
   except Exception as e:
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error "
         "in uploading document") from e
@@ -169,7 +169,7 @@ async def upload_data_json(input_data: InputData):
     status = ug.upload_json_file(case_id, uid, str(entity))
     return {"status": status, "input_data": input_data, "case_id": case_id}
   except Exception as e:
-    Logger.error(e)
+    logger.error(e)
     raise HTTPException(
         status_code=500, detail="Error "
         "in uploading document") from e

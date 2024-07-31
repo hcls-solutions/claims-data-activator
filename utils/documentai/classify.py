@@ -19,6 +19,7 @@ import asyncio
 from google.cloud import documentai_v1 as documentai
 import common.config
 
+logger = Logger.get_logger(__name__)
 # python utils/classify_test.py -f gs://
 # Make sure to SET GOOGLE_APPLICATION_CREDENTIALS
 # Make sure to source SET
@@ -66,14 +67,14 @@ async def process(input_uris):
 
 
   if not parser_details:
-    Logger.error(f"extraction_api - Parser {CLASSIFIER} not defined in config")
+    logger.error(f"extraction_api - Parser {CLASSIFIER} not defined in config")
     return
 
   processor_path = parser_details["processor_id"]
   location = parser_details.get("location",
                                 get_processor_location(processor_path))
   if not location:
-    Logger.error(
+    logger.error(
         f"extraction_api - Unidentified location for parser {processor_path}")
     return
 

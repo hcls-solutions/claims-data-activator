@@ -28,6 +28,8 @@ from common.config import STATUS_SUCCESS
 from common.utils.docai_helper import get_docai_input
 from common.utils.logging_handler import Logger
 
+
+logger = Logger.get_logger(__name__)
 # disabling for linting to pass
 # pylint: disable = broad-except
 router = APIRouter()
@@ -51,29 +53,29 @@ async def extraction(payload: ProcessTask, background_task: BackgroundTasks):
       """
   try:
     payload = payload.dict()
-    Logger.info(f"extraction_api - payload received {payload}")
+    logger.info(f"extraction_api - payload received {payload}")
     configs = payload.get("configs")
     parser_name = payload.get("parser_name")
-    Logger.info(f"extraction_api - Starting extraction for configs={configs}, parser_name={parser_name}")
+    logger.info(f"extraction_api - Starting extraction for configs={configs}, parser_name={parser_name}")
 
     processor, dai_client, input_uris = get_docai_input(parser_name, configs)
     if not processor or not dai_client:
-      Logger.error(f"extraction_api - Failed to get processor {parser_name} using config")
+      logger.error(f"extraction_api - Failed to get processor {parser_name} using config")
       return FAILED_RESPONSE
 
     if not dai_client:
-      Logger.error(f"extraction_api - Unidentified location for parser {parser_name}")
+      logger.error(f"extraction_api - Unidentified location for parser {parser_name}")
       return FAILED_RESPONSE
 
     background_task.add_task(extract_entities,
                              processor, dai_client, input_uris)
 
-    Logger.info(f"extraction_api - returning response")
+    logger.info(f"extraction_api - returning response")
     return SUCCESS_RESPONSE
 
   except Exception as e:
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(f"extraction_api - Extraction failed")
-    Logger.error(e)
-    Logger.error(err)
+    logger.error(f"extraction_api - Extraction failed")
+    logger.error(e)
+    logger.error(err)
     raise HTTPException(status_code=500)

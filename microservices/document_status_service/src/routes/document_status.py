@@ -33,6 +33,8 @@ from common.config import get_display_name_by_doc_class
 from common.models import Document
 from common.utils.logging_handler import Logger
 
+
+logger = Logger.get_logger(__name__)
 # disabling for linting to pass
 # pylint: disable = broad-except
 
@@ -53,7 +55,7 @@ async def create_document(case_id: str, filename: str, context: str, user=None):
        500 : If something fails
      """
   try:
-    Logger.info(f"create_document with case_id={case_id}, filename={filename}, context={context}")
+    logger.info(f"create_document with case_id={case_id}, filename={filename}, context={context}")
     document = Document()
     document.case_id = case_id
     document.upload_timestamp = datetime.datetime.utcnow()
@@ -71,11 +73,11 @@ async def create_document(case_id: str, filename: str, context: str, user=None):
     return {"status": STATUS_SUCCESS, "status_code": 200, "uid": document.uid}
 
   except Exception as e:
-    Logger.error(f"Error in create document for case_id {case_id} "
+    logger.error(f"Error in create document for case_id {case_id} "
                  f"and {filename}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500,
         detail=f"Error in creating documents for case_id {case_id}") from e
@@ -128,11 +130,11 @@ async def update_classification_status(
     }
 
   except Exception as e:
-    Logger.error(f"Error in updating classification status for "
+    logger.error(f"Error in updating classification status for "
                  f"case_id {case_id} and uid {uid}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500,
         detail="Error in updating classification status") from e
@@ -187,11 +189,11 @@ async def update_extraction_status(case_id: str,
     }
 
   except Exception as e:
-    Logger.error(f"Error in updating extraction status case_id {case_id} "
+    logger.error(f"Error in updating extraction status case_id {case_id} "
                  f"and uid {uid}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in updating"
         " extraction status") from e
@@ -244,11 +246,11 @@ async def update_validation_status(case_id: str,
     }
 
   except Exception as e:
-    Logger.error(f"Error in updating validation status"
+    logger.error(f"Error in updating validation status"
                  f" for case_id {case_id} and uid {uid}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in updating"
         " validation status") from e
@@ -303,11 +305,11 @@ async def update_matching_status(case_id: str,
     }
 
   except Exception as e:
-    Logger.error(f"Error in updating matching status for"
+    logger.error(f"Error in updating matching status for"
                  f" case_id {case_id} and uid {uid}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in updating matching status") from e
 
@@ -338,7 +340,7 @@ async def update_autoapproved(case_id: str, uid: str, status: str,
     return {"status": STATUS_SUCCESS, "case_id": case_id, "uid": uid}
   except Exception as e:
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in "
         "updating the autoapproval status") from e
@@ -379,10 +381,10 @@ async def create_documet_json_input(case_id: str, document_class: str, entity: L
     return {"status": STATUS_SUCCESS, "uid": document.uid}
 
   except Exception as e:
-    Logger.error("Error in  creating document")
-    Logger.error(e)
+    logger.error("Error in  creating document")
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error in"
         " creating the document") from e

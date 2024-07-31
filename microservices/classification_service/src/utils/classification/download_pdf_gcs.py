@@ -19,6 +19,9 @@ Module to download files from GCS.
 from google.cloud import storage
 from common.utils.logging_handler import Logger
 
+logger = Logger.get_logger(__name__)
+
+
 def download_pdf_gcs(bucket_name=None,
     gcs_uri=None,
     file_to_download=None,
@@ -52,7 +55,7 @@ def download_pdf_gcs(bucket_name=None,
 
   with open(output_filename, 'wb') as file_obj:
     blob.download_to_file(file_obj)
-    Logger.info(
+    logger.info(
       f"Downloaded gs://{bucket_name}/{file_to_download} to {output_filename}")
 
   return blob

@@ -27,6 +27,9 @@ from google.cloud import storage
 from common.utils.logging_handler import Logger
 from google.cloud import documentai_v1 as documentai
 
+
+logger = Logger.get_logger(__name__)
+
 def pattern_based_entities(parser_data, pattern):
   """
   Function return matched text as per pattern
@@ -109,7 +112,7 @@ def entities_extraction_new(parser_data):
       if "booleanValue" in normalizedVal.keys():
         val = normalizedVal.get("booleanValue")
       # else:
-      #   Logger.info("Debugging ")
+      #   logger.info("Debugging ")
     else:
       val = strip_value(val)
     parser_entities_dict[key] = [val, confidence]
@@ -142,7 +145,7 @@ def entities_extraction_new(parser_data):
           if "booleanValue" in normalizedVal.keys():
             val = normalizedVal.get("booleanValue")
           else:
-            Logger.info("Debugging ")
+            logger.info("Debugging ")
         else:
           val = strip_value(val)
 
@@ -196,7 +199,7 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
       if "booleanValue" in normalizedVal.keys():
         val = normalizedVal.get("booleanValue")
       # else:
-      #   Logger.info("Debugging ")
+      #   logger.info("Debugging ")
     else:
       val = strip_value(val)
     parser_entities_dict[key] = [val, confidence]
@@ -229,7 +232,7 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
           if "booleanValue" in normalizedVal.keys():
             val = normalizedVal.get("booleanValue")
           else:
-            Logger.info("Debugging ")
+            logger.info("Debugging ")
         else:
           val = strip_value(val)
 
@@ -386,7 +389,7 @@ def entities_extraction(parser_data, required_entities, doc_type):
   # Extract default entities
   entity_dict = default_entities_extraction(parser_data,
                                             default_entities, doc_type)
-  Logger.info("Default entities created from Specialized parser response")
+  logger.info("Default entities created from Specialized parser response")
   # if any derived entities then extract them
   if derived_entities:
     # this function can be used for all docs, if derived entities
@@ -394,7 +397,7 @@ def entities_extraction(parser_data, required_entities, doc_type):
     derived_entities_extracted_dict = derived_entities_extraction \
       (parser_data, derived_entities)
     entity_dict.update(derived_entities_extracted_dict)
-    Logger.info("Derived entities created from Specialized parser response")
+    logger.info("Derived entities created from Specialized parser response")
   return entity_dict
 
 
@@ -466,9 +469,9 @@ def standard_entity_mapping(desired_entities_list):
     Returns: Standard entities list
     -------
   """
-  Logger.info(
+  logger.info(
       f"standard_entity_mapping called for desired_entities_list={desired_entities_list}")
-  # Logger.info(f"desired_entities_list={desired_entities_list}")
+  # logger.info(f"desired_entities_list={desired_entities_list}")
   # convert extracted json to pandas dataframe
   df_json = pd.DataFrame.from_dict(desired_entities_list)
   # read entity standardization csv
@@ -492,7 +495,7 @@ def standard_entity_mapping(desired_entities_list):
   # Replace the value by creating a list by looking up the value and assign
   # to json entity
 
-  # Logger.info(f"df_json={df_json}, dict_lookup={dict_lookup}")
+  # logger.info(f"df_json={df_json}, dict_lookup={dict_lookup}")
   for index, item in enumerate(key_list):
     # print(f"item={item}")
     if item in dict_lookup:
@@ -542,7 +545,7 @@ def standard_entity_mapping(desired_entities_list):
   df_final = df_final.replace(r"^\s*$", np.nan, regex=True)
   df_final = df_final.replace({np.nan: None})
   extracted_entities_final_json = df_final.to_dict("records")
-  Logger.info("Entities standardization completed")
+  logger.info("Entities standardization completed")
   return extracted_entities_final_json
 
 
@@ -604,7 +607,7 @@ def form_parser_entities_mapping(form_parser_entity_list, mapping_dict,
           print(f" ==> entity: {each_val}, value: {df['value'][idx_list[idx]]}")
 
         except:  # pylint: disable=bare-except
-          Logger.info("Key not found in parser output,"
+          logger.info("Key not found in parser output,"
                       " so filling null value")
 
           temp_dict = {"entity": each_val, "value": None,
@@ -632,7 +635,7 @@ def form_parser_entities_mapping(form_parser_entity_list, mapping_dict,
                      "page_height": None
                      }
         required_entities_list.append(temp_dict)
-  Logger.info("Default entities created from Form parser response")
+  logger.info("Default entities created from Form parser response")
   if derived_entities:
     # this function can be used for all docs, if derived entities
     # are extracted by using regex pattern
@@ -641,7 +644,7 @@ def form_parser_entities_mapping(form_parser_entity_list, mapping_dict,
     derived_entities_op_dict = derived_entities_extraction(parser_data,
                                                            derived_entities)
     required_entities_list.extend(list(derived_entities_op_dict.values()))
-    Logger.info("Derived entities created from Form parser response")
+    logger.info("Derived entities created from Form parser response")
 
   # if table_entities:
   #   table_response = None
@@ -654,7 +657,7 @@ def form_parser_entities_mapping(form_parser_entity_list, mapping_dict,
   #       required_entities_list.extend(table_response)
   #       break
   #   if table_response is None:
-  #     Logger.error("No table data found")
+  #     logger.error("No table data found")
 
   # print("Extracted list required_entities_list")
   # print(required_entities_list)
@@ -715,7 +718,7 @@ def clean_form_parser_keys(text):
       text += last_word
 
   except:  # pylint: disable=bare-except
-    Logger.error("Exception occurred while cleaning keys")
+    logger.error("Exception occurred while cleaning keys")
 
   return text
 
@@ -819,7 +822,7 @@ def extraction_accuracy_calc(total_entities_list, flag=True):
                           get("manual_extraction")]
 
   if len(entity_accuracy_list) == 0:
-    Logger.warning(f"No entity present with extraction_confidence field")
+    logger.warning(f"No entity present with extraction_confidence field")
     extraction_accuracy = 0
     extraction_field_min_score = 0
   else:

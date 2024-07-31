@@ -17,7 +17,7 @@ import asyncio
 from google.cloud import documentai_v1 as documentai
 
 from google.cloud import storage
-
+logger = Logger.get_logger(__name__)
 
 storage_client = storage.Client()
 # python utils/extract.py -f gs://
@@ -117,14 +117,14 @@ async def process(input_uris):
   parser_details = common.config.get_parser_by_name(parser_name)
 
   if not parser_details:
-    Logger.error(f"extraction_api - Parser {parser_name} not defined in config")
+    logger.error(f"extraction_api - Parser {parser_name} not defined in config")
     return
 
   processor_path = parser_details["processor_id"]
   location = parser_details.get("location",
                                 get_processor_location(processor_path))
   if not location:
-    Logger.error(
+    logger.error(
         f"extraction_api - Unidentified location for parser {processor_path}")
     return
 

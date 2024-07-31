@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, Request
 from routes import matching
 
+logger = Logger.get_logger(__name__)
 app = FastAPI(title="Matching Service API")
 
 
@@ -44,7 +45,7 @@ async def add_process_time_header(request: Request, call_next):
   if path != "/ping":
     process_time = time.time() - start_time
     time_elapsed = round(process_time * 1000)
-    Logger.info(f"{method} {path} Time elapsed: {str(time_elapsed)} ms")
+    logger.info(f"{method} {path} Time elapsed: {str(time_elapsed)} ms")
   return response
 
 

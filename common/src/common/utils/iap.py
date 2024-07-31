@@ -22,29 +22,30 @@ from common.utils.logging_handler import Logger
 from common.config import PROJECT_ID, IAP_SECRET_NAME
 from google.cloud import secretmanager
 
+logger = Logger.get_logger(__name__)
 
 client = secretmanager.SecretManagerServiceClient()
 
 
 def get_secret(project_name, secret_name, version_num):
   try:
-    Logger.info(f"get_secret with project_name={project_name} secret_name={secret_name} version_num={version_num}")
+    logger.info(f"get_secret with project_name={project_name} secret_name={secret_name} version_num={version_num}")
     # Returns secret payload from Cloud Secret Manager
     client = secretmanager.SecretManagerServiceClient()
     name = client.secret_version_path(project_name, secret_name, version_num)
     response = client.access_secret_version(request={"name": name})
     payload = response.payload.data.decode("UTF-8")
-    Logger.info(f"get_secret with payload={payload}")
+    logger.info(f"get_secret with payload={payload}")
     return payload
   except Exception as exc:
-    Logger.info(f"get_secret skipping .. ")
+    logger.info(f"get_secret skipping .. ")
     return None
 
 
 def send_iap_request(url, method="GET", **kwargs):
-  Logger.info(f"send_iap_request with url={url}, method={method}, {kwargs}")
+  logger.info(f"send_iap_request with url={url}, method={method}, {kwargs}")
   client_id = get_secret(PROJECT_ID, IAP_SECRET_NAME, "latest")
-  Logger.info(f"send_iap_request client_id={client_id}")
+  logger.info(f"send_iap_request client_id={client_id}")
   if client_id is not None:
     response = make_iap_request(url, client_id, method=method, **kwargs)
   else:
@@ -77,10 +78,10 @@ def make_iap_request(url, client_id, method='GET', **kwargs):
   # account.
   try:
     open_id_connect_token = id_token.fetch_id_token(Request(), client_id)
-    Logger.info(f"make_iap_request with open_id_connect_token={open_id_connect_token} for client_id={client_id}")
+    logger.info(f"make_iap_request with open_id_connect_token={open_id_connect_token} for client_id={client_id}")
   except Exception as exc:
-    Logger.warning(f"make_iap_request could not get open_id_connect_token for client_id={client_id}")
-    Logger.error(exc)
+    logger.warning(f"make_iap_request could not get open_id_connect_token for client_id={client_id}")
+    logger.error(exc)
 
   # Fetch the Identity-Aware Proxy-protected URL, including an
   # Authorization header containing "Bearer " followed by a

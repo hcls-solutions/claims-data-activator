@@ -25,6 +25,9 @@ from common.utils.api_calls import extract_documents
 from common.utils.logging_handler import Logger
 
 
+logger = Logger.get_logger(__name__)
+
+
 def sort_per_doc_class(docs):
   document_class_list = set([doc["document_class"] for doc in docs])
   doc_sorted_dic = {}
@@ -32,7 +35,7 @@ def sort_per_doc_class(docs):
     doc_sorted_dic[doc_class] = [doc for doc in docs if doc["document_class"]
                                  == doc_class]
 
-  Logger.info(f"sort_per_doc_class doc_sorted_dic={doc_sorted_dic} ")
+  logger.info(f"sort_per_doc_class doc_sorted_dic={doc_sorted_dic} ")
   return doc_sorted_dic
 
 
@@ -45,9 +48,9 @@ def run_pipeline(payload: Dict, is_hitl: bool, is_reassign: bool):
   """
   # For unclassified or reassigned documents set the doc_class
   if is_hitl:
-    Logger.info(f"run_pipeline with payload = {payload}")
+    logger.info(f"run_pipeline with payload = {payload}")
     documents = payload.get("configs")
-    Logger.info(f"run_pipeline with documents = {documents}")
+    logger.info(f"run_pipeline with documents = {documents}")
     for doc in documents:
       uid = doc.get("uid")
       doc_class = doc["document_class"]
@@ -56,9 +59,9 @@ def run_pipeline(payload: Dict, is_hitl: bool, is_reassign: bool):
   # for other cases like normal flow classify the documents
   elif is_reassign:
     documents = payload.get("configs")[0]
-    Logger.info(f"run_pipeline with documents = {documents}")
+    logger.info(f"run_pipeline with documents = {documents}")
     for doc in documents:
-      Logger.info(f"Executing pipeline for reassign/hitl scenario "
+      logger.info(f"Executing pipeline for reassign/hitl scenario "
                   f"{doc}")
       # Todo re-assign scenario is broken and not in use
       # extraction_score = doc["extraction_score"]
@@ -82,22 +85,22 @@ def send_classification_request(configs: List[Dict]):
     base_url = "http://classification-service/classification_service/v1/" \
                "classification/classification_api"
     payload = {"configs": configs}
-    Logger.info(
+    logger.info(
       f"get_classification sending to {base_url} with payload={payload}")
     response = requests.post(base_url, json=payload)
-    Logger.info(f"get_classification response {response}")
+    logger.info(f"get_classification response {response}")
     return response
   except requests.exceptions.RequestException as err:
-    Logger.error(err)
+    logger.error(err)
 
 
 def classify_documents(configs: List[Dict]):
-  Logger.info(f"classify_documents with configs = {configs}")
+  logger.info(f"classify_documents with configs = {configs}")
 
   cl_result = send_classification_request(configs)
 
   if cl_result and cl_result.status_code == 200:
-    Logger.info(f"classify_documents - response received {cl_result}")
+    logger.info(f"classify_documents - response received {cl_result}")
   else:
-    Logger.error(
+    logger.error(
         f"classify_documents: Classification FAILED")

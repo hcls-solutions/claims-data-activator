@@ -31,6 +31,7 @@ from common.matching_config import MATCHING_USER_KEYS_SUPPORTING_DOC
 from common.matching_config import APPLICATION_DOC_DATE_FORMAT
 from common.utils.logging_handler import Logger
 
+logger = Logger.get_logger(__name__)
 
 def compare_dates(date1: str, date2: str, date1_format: str, date2_format: str):
   """Dates are compared after converting them to a specific format
@@ -65,7 +66,7 @@ def compare_dates(date1: str, date2: str, date1_format: str, date2_format: str):
     else:
       return 0.0
   except ValueError:
-    Logger.error('Invalid date format does not match with the date provided.')
+    logger.error('Invalid date format does not match with the date provided.')
     return 0.0
 
 
@@ -87,14 +88,14 @@ def compare_json(application_json_obj, supporting_json_obj, sd_doc_type,
     # run the comparison for = total keys in the supporting docs
     app_df = pd.DataFrame(application_json_obj)
     app_keys = list(app_df['entity'])
-    Logger.info(app_keys)
+    logger.info(app_keys)
     support_df = pd.DataFrame(supporting_json_obj)
     support_df['matching_score'] = 0.0
     support_keys = list(support_df['entity'])
-    Logger.info(support_keys)
-    Logger.info(support_keys)
+    logger.info(support_keys)
+    logger.info(support_keys)
     if support_doc_type not in MATCHING_USER_KEYS_SUPPORTING_DOC:
-      Logger.warning('Unsupported supporting doc')
+      logger.warning('Unsupported supporting doc')
       return []
 
     support_doc_dict = MATCHING_USER_KEYS_SUPPORTING_DOC[support_doc_type]
@@ -148,7 +149,7 @@ def compare_json(application_json_obj, supporting_json_obj, sd_doc_type,
 
           final_score = raw_score
         else:
-          Logger.warning(f'Values related to keys are None: {u_key}')
+          logger.warning(f'Values related to keys are None: {u_key}')
           final_score = 0.0
       else:
         final_score = 0.0
@@ -170,5 +171,5 @@ def compare_json(application_json_obj, supporting_json_obj, sd_doc_type,
     return supporting_json_obj
 
   except Exception as e:
-    Logger.error(e)
+    logger.error(e)
     return None

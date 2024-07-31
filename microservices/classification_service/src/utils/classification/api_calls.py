@@ -33,20 +33,22 @@ from common.models import Document
 from common.utils.copy_gcs_documents import upload_file
 import datetime
 
+logger = Logger.get_logger(__name__)
+
 
 def create_document(case_id, filename, context=None, user=None):
   uid = None
   try:
-    Logger.info(
+    logger.info(
         f"create_document: with case_id = {case_id} filename = {filename} context = {context}")
     url = f"{common.config.get_document_status_service_url()}/create_document?case_id={case_id}&filename={filename}&context={context}&user={user}"
-    Logger.info(f"create_document: posting request to {url}")
+    logger.info(f"create_document: posting request to {url}")
     response = send_iap_request(url, method="POST")
     response = response.json()
     uid = response.get("uid")
-    Logger.info(f"create_document: Response received ={response}, uid={uid}")
+    logger.info(f"create_document: Response received ={response}, uid={uid}")
   except requests.exceptions.RequestException as err:
-    Logger.error(err)
+    logger.error(err)
 
   return uid
 
@@ -82,24 +84,24 @@ def update_classification_status(case_id: str,
 # Uploads split Documents
 def upload_document(local_path, case_id):
   file_name = os.path.basename(local_path)
-  Logger.info(
+  logger.info(
       f"upload - using local_path={local_path}, case_id={case_id}")
   if local_path is None:
-    Logger.error(f"Error, {local_path} is not set, exiting.")
+    logger.error(f"Error, {local_path} is not set, exiting.")
     return
 
   # Create record in Firestore
   uid = create_document(case_id, file_name)
   if uid is None:
-    Logger.error(f"upload - Failed to create document {file_name}")
+    logger.error(f"upload - Failed to create document {file_name}")
     return
   else:
-    Logger.info(f"upload - Succeeded to create document {file_name} with uid = {uid}")
+    logger.info(f"upload - Succeeded to create document {file_name} with uid = {uid}")
     file_uri = f"{case_id}/{uid}/{file_name}"
     gsc_uri = f"gs://{BUCKET_NAME}/{file_uri}"
 
     upload_file(local_path, BUCKET_NAME, file_uri)
-    Logger.info(
+    logger.info(
         f"upload - File {file_name} with case_id {case_id} and uid {uid}"
         f" uploaded successfully in GCS bucket = {gsc_uri}")
 
@@ -120,6 +122,6 @@ def upload_document(local_path, case_id):
       document.update()
       return uid
     else:
-      Logger.error(f"upload - Could not retrieve document by id {uid}")
+      logger.error(f"upload - Could not retrieve document by id {uid}")
       return
 

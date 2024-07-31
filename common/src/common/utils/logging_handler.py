@@ -1,5 +1,5 @@
 """
-Copyright 2022 Google LLC
+Copyright 2024 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,48 +13,50 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import os
 
-"""class and methods for logs handling."""
 
 import logging
-import google.cloud.logging_v2
+import os
+import sys
+from common.config import CLOUD_LOGGING_ENABLED
+import google.cloud.logging
 
-logging_client = google.cloud.logging_v2.Client()
-logging_client.get_default_handler()
-logging_client.setup_logging()
+"""class and methods for logs handling.
+Sample usage:
+>>> from common.utils.logging_handler import logger
 
-logging.basicConfig(level=logging.INFO)
-# utility to get stdout when running locally utility testing scripts
-debug = os.environ.get("DEBUG", None)
+>>> logger.get_logger(__file__)
 
-class Logger():
+>>> def my_function(){
+>>>   logger.info("")
+>>> }
+"""
+if CLOUD_LOGGING_ENABLED:
+  client = google.cloud.logging.Client()
+  client.setup_logging()
+  logging.basicConfig(format="%(asctime)s:%(levelname)s:%(message)s",
+                      level=logging.INFO)
+else:
+  logging.basicConfig(level=logging.INFO)
+
+
+class Logger:
   """class def handling logs."""
-  @staticmethod
-  def info(message):
-    """Display info logs."""
-    logging.info(message)
-    if debug:
-      print(message)
 
+  def __init__(self, name):
+    dirname = os.path.dirname(name)
+    filename = os.path.split(name)[1]
+    folder = os.path.split(dirname)[1]
+    module_name = f"{folder}/{filename}"
+    self.logger = logging.getLogger(module_name)
+    handler = logging.StreamHandler(sys.stdout)
+    log_format = "%(levelname)s: [%(name)s:%(lineno)d - " \
+                 "%(funcName)s()] %(message)s"
+    handler.setFormatter(logging.Formatter(log_format))
+    self.logger.addHandler(handler)
+    self.logger.propagate = False
 
-  @staticmethod
-  def warning(message):
-    """Display warning logs."""
-    logging.warning(message)
-    if debug:
-      print(message)
-
-  @staticmethod
-  def error(message):
-    """Display error logs."""
-    logging.error(message)
-    if debug:
-      print(message)
-
-  @staticmethod
-  def debug(message):
-    """Display debug logs."""
-    logging.debug(message)
-    if debug:
-      print(message)
+  @classmethod
+  def get_logger(cls, name) -> logging.Logger:
+    logger_instance = cls(name)
+    return logger_instance.logger

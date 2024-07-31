@@ -24,6 +24,9 @@ import json
 from copy import deepcopy
 from common.utils.logging_handler import Logger
 
+
+logger = Logger.get_logger(__name__)
+
 class TableExtractor:
   """
   Extract data from a table present in the form
@@ -88,7 +91,7 @@ class TableExtractor:
                     table_data[row_num] = {"rows": deepcopy(col_data)}
 
                 except ValueError as e:
-                  Logger.error(e)
+                  logger.error(e)
                   return "Table Empty !!!"
 
               page_data[table_num] = table_data
@@ -96,7 +99,7 @@ class TableExtractor:
               page_data["width"] = page["dimension"]["width"]
           self.master_dict[pg_num] = page_data
     else:
-      Logger.error("no data found in table")
+      logger.error("no data found in table")
       return None
 
   @staticmethod
@@ -162,7 +165,7 @@ class TableExtractor:
             return table_dict, table_header
           else:
             continue
-    Logger.error("Input headers does not match up to 70% with any table.")
+    logger.error("Input headers does not match up to 70% with any table.")
     return None
 
   def table_not_found(self, table_entities):
@@ -201,7 +204,7 @@ class TableExtractor:
 
         out.append(deepcopy(entity_data))
       except Exception as e:
-        Logger.error(e)
+        logger.error(e)
         continue
     return out
 
@@ -232,7 +235,7 @@ class TableExtractor:
           table_dict = self.master_dict[page_num][table_num]
           columns = [val[0] for val in table_dict["headers"]]
           if TableExtractor.compare_lists(columns, inp_header) < 0.70:
-            Logger.error( "Table does not match with the headers provided")
+            logger.error("Table does not match with the headers provided")
             return self.table_not_found(table_entities)
         # if no table and page info provided.Iterate over all the pages to find
         # the table based on header
@@ -246,16 +249,16 @@ class TableExtractor:
 
         elif page_num > 0 and table_num == 0:
           if page_num not in self.master_dict:
-            Logger.error( "page not found")
+            logger.error( "page not found")
             return self.table_not_found(table_entities)
           page_dict = self.master_dict[page_num]
           table_dict, columns = TableExtractor.get_table_using_header(
             page_dict, inp_header)
         else:
-          Logger.error("Operation cannot be performed. Check your config")
+          logger.error("Operation cannot be performed. Check your config")
           return self.table_not_found(table_entities)
       except Exception as e:
-        Logger.error(e)
+        logger.error(e)
         return self.table_not_found(table_entities)
       out = []
 
@@ -277,10 +280,10 @@ class TableExtractor:
 
           out.append(deepcopy(entity_data))
         except Exception as e:
-          Logger.warning(e)
+          logger.warning(e)
           continue
       return out
     else:
-      Logger.error("No header present in the table. Table not extracted.")
+      logger.error("No header present in the table. Table not extracted.")
       return self.table_not_found(table_entities)
 

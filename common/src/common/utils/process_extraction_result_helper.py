@@ -11,6 +11,7 @@ from common.utils.logging_handler import Logger
 from common.config import get_extraction_confidence_threshold
 from common.config import get_extraction_confidence_threshold_per_field
 
+logger = Logger.get_logger(__name__)
 
 def update_autoapproval_status(case_id: str, uid: str, a_status: str,
     autoapproved_status: str, is_autoapproved: str):
@@ -34,20 +35,20 @@ def validate_match_approve(case_id, uid, extraction_score,
                                         extraction_entities)
   if validation_res.status_code == 200:
     print("====Validation successful==========")
-    Logger.info(f"Validation successful for case_id: {case_id} uid:{uid}.")
+    logger.info(f"Validation successful for case_id: {case_id} uid:{uid}.")
     validation_score = validation_res.json().get("score")
     matching_res = get_matching_score(case_id, uid)
     if matching_res.status_code == 200:
       print("====Matching successful==========")
-      Logger.info(f"Matching successful for case_id: {case_id} uid:{uid}.")
+      logger.info(f"Matching successful for case_id: {case_id} uid:{uid}.")
       matching_score = matching_res.json().get("score")
       update_autoapproval(document_class, case_id, uid,
                           validation_score, extraction_score,
                           min_extraction_score_per_field, matching_score)
     else:
-      Logger.error(f"Matching FAILED for case_id: {case_id} uid:{uid}")
+      logger.error(f"Matching FAILED for case_id: {case_id} uid:{uid}")
   else:
-    Logger.error(f"Validation FAILED for case_id: {case_id} uid:{uid}")
+    logger.error(f"Validation FAILED for case_id: {case_id} uid:{uid}")
   return validation_score, matching_score
 
 
@@ -94,7 +95,7 @@ def update_autoapproval(document_class,
                                                 extraction_score,
                                                 min_extraction_score_per_field,
                                                 matching_score, document_class)
-  Logger.info(f"autoapproval_status for application:{autoapproval_status}\
+  logger.info(f"autoapproval_status for application:{autoapproval_status}\
       for case_id: {case_id} uid:{uid}")
   update_autoapproval_status(case_id, uid, STATUS_SUCCESS,
                              autoapproval_status[0], "yes")
@@ -141,7 +142,7 @@ def get_autoapproval_status(validation_score, extraction_score,
 
   data = AUTO_APPROVAL_MAPPING
 
-  Logger.info(
+  logger.info(
       f"get_autoapproval_status with Validation_Score:{validation_score}, "
       f"Extraction_score: {extraction_score}, "
       f"Extraction_score per field (min): {min_extraction_score_per_field}, "
@@ -161,7 +162,7 @@ def get_autoapproval_status(validation_score, extraction_score,
 
     if extraction_score > global_extraction_confidence_threshold and \
         min_extraction_score_per_field > global_extraction_confidence_threshold_per_field:
-      Logger.info(f"Passing threshold configured for Auto-Approve with "
+      logger.info(f"Passing threshold configured for Auto-Approve with "
                   f"min_extraction_score_per_field {min_extraction_score_per_field} > "
                   f"{global_extraction_confidence_threshold_per_field} and "
                   f"extraction_score {extraction_score} >"
@@ -169,7 +170,7 @@ def get_autoapproval_status(validation_score, extraction_score,
       flag = "yes"
       status = STATUS_APPROVED
 
-    Logger.info(f"Status: {status}")
+    logger.info(f"Status: {status}")
     return status, flag
 
   print(f"data[document_label]={data[document_label]}")
@@ -187,7 +188,7 @@ def get_autoapproval_status(validation_score, extraction_score,
       if check_scores():
         flag = "yes"
         status = STATUS_APPROVED
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
         return status, flag
 
     else:
@@ -195,11 +196,11 @@ def get_autoapproval_status(validation_score, extraction_score,
 
       if check_scores():
         status = STATUS_REVIEW
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
         return status, flag
 
       else:
         status = STATUS_REJECTED
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
       return status, flag
 

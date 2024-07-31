@@ -31,7 +31,7 @@ from google.api_core.exceptions import InternalServerError
 from google.api_core.exceptions import RetryError
 from typing import Any
 
-
+logger = Logger.get_logger(__name__)
 storage_client = storage.Client()
 class DocumentaiUtils:
     def __init__(self, project_number: str, api_location: str):
@@ -124,7 +124,7 @@ class DocumentaiUtils:
         parent = self.get_parent()
 
         name = f"{parent}/processors/{processor_id}"
-        Logger.info(f"batch_extraction - processor name = {name}")
+        logger.info(f"batch_extraction - processor name = {name}")
         processor = client.get_processor(name=name)
         input_docs = [documentai.GcsDocument(gcs_uri=doc_uri,
                                              mime_type=PDF_MIME_TYPE)
@@ -141,9 +141,9 @@ class DocumentaiUtils:
         output_config = documentai.DocumentOutputConfig(
             gcs_output_config={"gcs_uri": destination_uri})
 
-        Logger.info(f"batch_extraction - input_config = {input_config}")
-        Logger.info(f"batch_extraction - output_config = {output_config}")
-        Logger.info(
+        logger.info(f"batch_extraction - input_config = {input_config}")
+        logger.info(f"batch_extraction - output_config = {output_config}")
+        logger.info(
             f"batch_extraction - Calling Processor API for {len(input_uris)} document(s) "
             f"batch_extraction - Calling DocAI API for {len(input_uris)} document(s) "
             f" using {processor.display_name} processor "
@@ -162,17 +162,17 @@ class DocumentaiUtils:
         # This could take some time for larger files
         # Format: projects/PROJECT_NUMBER/locations/LOCATION/operations/OPERATION_ID
         try:
-            Logger.info(
+            logger.info(
                 f"batch_extraction - Waiting for operation {operation.operation.name} to complete...")
             operation.result(timeout=timeout)
         # Catch exception when operation doesn't finish before timeout
         except (RetryError, InternalServerError) as e:
-            Logger.error(e.message)
-            Logger.error("batch_extraction - Failed to process documents")
+            logger.error(e.message)
+            logger.error("batch_extraction - Failed to process documents")
             return [], False
 
         elapsed = "{:.0f}".format(time.time() - start)
-        Logger.info(
+        logger.info(
             f"batch_extraction - Elapsed time for operation {elapsed} seconds")
 
         # Once the operation is complete,
@@ -192,14 +192,14 @@ class DocumentaiUtils:
             input_gcs_source = process.input_gcs_source
             matches = re.match(r"gs://(.*?)/(.*)", process.output_gcs_destination)
             if not matches:
-                Logger.error(f"batch_extraction - Could not parse output GCS destination:[{process.output_gcs_destination}] for {input_gcs_source}")
-                Logger.error(f"batch_extraction - {process.status}")
+                logger.error(f"batch_extraction - Could not parse output GCS destination:[{process.output_gcs_destination}] for {input_gcs_source}")
+                logger.error(f"batch_extraction - {process.status}")
                 continue
 
             output_bucket, output_prefix = matches.groups()
             output_gcs_destination = process.output_gcs_destination
 
-            Logger.info(
+            logger.info(
                 f"batch_extraction - Handling DocAI results for {input_gcs_source} using "
                 f"process output {output_gcs_destination}")
             # Get List of Document Objects from the Output Bucket
@@ -213,7 +213,7 @@ class DocumentaiUtils:
             for blob in output_blobs:
                 # Document AI should only output JSON files to GCS
                 if ".json" not in blob.name:
-                    Logger.warning(f"batch_extraction - Skipping non-supported file: {blob.name} - Mimetype: {blob.content_type}")
+                    logger.warning(f"batch_extraction - Skipping non-supported file: {blob.name} - Mimetype: {blob.content_type}")
                     continue
 
                 if input_gcs_source not in documents.keys():

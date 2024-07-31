@@ -1,5 +1,5 @@
 """
-Copyright 2022 Google LLC
+Copyright 2024 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ from common.config import STATUS_SUCCESS
 from common.utils.logging_handler import Logger
 
 storage_client = storage.Client()
-
+logger = Logger.get_logger(__name__)
 
 def copy_blob(bucket_name, source_blob_name, destination_blob_name,
     dest_bucket_name=None, delete_original=False):
   dest_bucket_name_str = bucket_name if not dest_bucket_name else dest_bucket_name
-  Logger.info(f"Copying {source_blob_name} in bucket {bucket_name} to "
+  logger.info(f"Copying {source_blob_name} in bucket {bucket_name} to "
               f"{destination_blob_name} inside bucket {dest_bucket_name_str}")
   source_bucket = storage_client.bucket(bucket_name)
   source_blob = source_bucket.blob(source_blob_name)

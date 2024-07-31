@@ -30,6 +30,8 @@ from common.utils.docai_warehouse_helper import (
 from common.utils.document_ai_utils import DocumentaiUtils
 from common.utils import storage_utils, helper
 
+logger = Logger.get_logger(__name__)
+
 assert PROCESSOR_ID, "PROCESSOR_ID not set"
 assert GCS_OUTPUT_BUCKET, "GCS_OUTPUT_BUCKET not set"
 assert DOCAI_PROJECT_NUMBER, "DOCAI_PROJECT_NUMBER not set"
@@ -53,7 +55,7 @@ created_schemas = set()
 
 
 def main(folder_name: str, schema_name: str = None):
-    Logger.info(
+    logger.info(
         f"Batch load into DocumentAI WH using \n root_name={folder_name}, "
         f"dir_uri={dir_uri}, overwrite={overwrite}, options={options}, flatten={flatten} \n"
         f"DOCAI_WH_PROJECT_NUMBER={DOCAI_WH_PROJECT_NUMBER}, "
@@ -78,7 +80,7 @@ def main(folder_name: str, schema_name: str = None):
     for blob in blobs:
         filename = blob.name
 
-        Logger.info(f"Handling {filename}")
+        logger.info(f"Handling {filename}")
 
         try:
             if filename.endswith(".pdf"):
@@ -87,7 +89,7 @@ def main(folder_name: str, schema_name: str = None):
                 else:
                     dirs = filename.split("/")
                 if " " in dirs[:-1]:
-                    Logger.warning(
+                    logger.warning(
                         f"Skipping {filename} since name contains space, currently this is not supported."
                     )
 
@@ -113,7 +115,7 @@ def main(folder_name: str, schema_name: str = None):
                             if overwrite:
                                 delete_document(reference_id)
                             else:
-                                Logger.info(
+                                logger.info(
                                     f"Skipping gs://{bucket_name}/{filename} since it already exists..."
                                 )
                                 continue
@@ -125,7 +127,7 @@ def main(folder_name: str, schema_name: str = None):
 
                         processed_files.append(filename)
         except Exception as ex:
-            Logger.error(f"Exception {ex} while handling {filename}")
+            logger.error(f"Exception {ex} while handling {filename}")
             error_files.append(filename)
 
     # Process All Documents in One batch
@@ -184,7 +186,7 @@ def main(folder_name: str, schema_name: str = None):
                     metadata_properties,
                 )
             except Exception as ex:
-                Logger.error(f"Failed to upload {f_uri} - {ex}")
+                logger.error(f"Failed to upload {f_uri} - {ex}")
 
     process_time = time.time() - initial_start_time
     time_elapsed = round(process_time)
@@ -193,7 +195,7 @@ def main(folder_name: str, schema_name: str = None):
         document_schema_str = (
             f"  - created document schema with id {','.join(list(created_schemas))}"
         )
-    Logger.info(
+    logger.info(
         f"Job Completed in {str(round(time_elapsed / 60))} minute(s): \n"
         f"{document_schema_str}  \n"
         f"  - processed gcs files={len(processed_files)} \n"
@@ -203,7 +205,7 @@ def main(folder_name: str, schema_name: str = None):
     )
 
     if len(error_files) != 0:
-        Logger.info(
+        logger.info(
             f"Following files could not be handled (Document page number exceeding limit of 200 pages? {','.join(error_files)}"
         )
 
@@ -281,7 +283,7 @@ def document_exists(reference_id: str) -> bool:
 
 
 def delete_document(reference_id: str):
-    Logger.info(f"delete_document reference_id={reference_id}")
+    logger.info(f"delete_document reference_id={reference_id}")
     reference_path = f"referenceId/{reference_id}"
     dw_utils.delete_document(document_id=reference_path, caller_user_id=CALLER_USER)
 
@@ -305,7 +307,7 @@ def upload_document_gcs(
         metadata_properties=metadata_properties,
     )
 
-    Logger.debug(
+    logger.debug(
         f"create_document_response={create_document_response}"
     )  # Verify that the properties have been set correctly
 
@@ -318,7 +320,7 @@ def upload_document_gcs(
             folder_document_id=folder_id,
             caller_user_id=CALLER_USER,
         )
-        Logger.info(
+        logger.info(
             f"Created document {file_uri} with reference_id={reference_id} inside folder_id={folder_id} and using schema_id={document_schema_id}"
         )
         return document_id
@@ -335,9 +337,9 @@ def create_folder_schema(schema_path: str):
     create_schema_response = dw_utils.create_document_schema(folder_schema)
     folder_schema_id = create_schema_response.name.split("/")[-1]
 
-    Logger.info(f"folder_schema_id={folder_schema_id}")
+    logger.info(f"folder_schema_id={folder_schema_id}")
     response = dw_utils.get_document_schema(schema_id=folder_schema_id)
-    Logger.debug(f"response={response}")
+    logger.debug(f"response={response}")
     return folder_schema_id
 
 
@@ -348,7 +350,7 @@ def create_folder(folder_schema_id: str, display_name: str, reference_id: str):
         folder_id = document.name.split("/")[-1]
         return folder_id
     except NotFound:
-        Logger.info(
+        logger.info(
             f" -------> Creating sub-folder [{display_name}] with reference_id=[{reference_id}]"
         )
         create_folder_response = dw_utils.create_document(
@@ -378,22 +380,22 @@ def create_document_schema(schema_path, overwrite_schema=False):
             document_schema_id = ds.name.split("/")[-1]
             if overwrite_schema:
                 try:
-                    Logger.info(
+                    logger.info(
                         f"Removing {ds.display_name} with document_schema_id={document_schema_id}"
                     )
                     dw_utils.delete_document_schema(document_schema_id)
                 except Exception as ex:
-                    Logger.warning(f"Could not replace schema due to error {ex}")
+                    logger.warning(f"Could not replace schema due to error {ex}")
                     return document_schema_id
             else:
-                Logger.info(
+                logger.info(
                     f"create_document_schema - Document schema with display_name = {display_name} already exists with schema_id = {document_schema_id}"
                 )
                 return document_schema_id
 
     create_schema_response = dw_utils.create_document_schema(document_schema)
     document_schema_id = create_schema_response.name.split("/")[-1]
-    Logger.info(
+    logger.info(
         f"create_document_schema - Created document schema with display_name = {display_name} and schema_id = {document_schema_id}"
     )
     return document_schema_id
@@ -460,27 +462,27 @@ def get_args():
 
 def delete_schema(schema_id: str):
     try:
-        Logger.info(f"Removing schema with schema_id={schema_id}")
+        logger.info(f"Removing schema with schema_id={schema_id}")
         dw_utils.delete_document_schema(schema_id)
     except Exception as ex:
-        Logger.warning(f"Could not replace schema due to error {ex}")
+        logger.warning(f"Could not replace schema due to error {ex}")
 
 
 def delete_schema_by_name(display_name: str):
-    Logger.info(f"Deleting schema with display_name={display_name}")
+    logger.info(f"Deleting schema with display_name={display_name}")
     for ds in dw_utils.list_document_schemas():
         if ds.display_name == display_name and not ds.document_is_folder:
             document_schema_id = ds.name.split("/")[-1]
             try:
-                Logger.info(
+                logger.info(
                     f"Removing {ds.display_name} with document_schema_id={document_schema_id}"
                 )
                 dw_utils.delete_document_schema(document_schema_id)
             except Exception as ex:
-                Logger.warning(f"Could not delete schema due to error {ex}")
+                logger.warning(f"Could not delete schema due to error {ex}")
 
             else:
-                Logger.info(
+                logger.info(
                     f"Schema with display_name={display_name} and schema_id={document_schema_id}  has been successfully deleted "
                 )
 

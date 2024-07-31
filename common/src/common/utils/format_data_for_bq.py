@@ -1,5 +1,5 @@
 """
-Copyright 2022 Google LLC
+Copyright 2024 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
+from common.utils.logging_handler import Logger
+logger = Logger.get_logger(__name__)
+
 """
 Function to format data to be inserted in BigQuery
 """
-
-import json
-from common.utils.logging_handler import Logger
 
 
 def format_data_for_bq(entities):
@@ -30,16 +31,15 @@ def format_data_for_bq(entities):
     entity : list of dictionaries
     output : string format of entities and values
   """
-  Logger.info(f"format_data_for_bq - entities={entities}")
+  logger.info(f"entities={entities}")
   if entities is not None:
     new_list = []
     for i in entities:
-      entity_dict = {}
-      entity_dict["name"] = i.get("entity")
-      entity_dict["value"] = i.get("value")
-      entity_dict["confidence"] = i.get("extraction_confidence")
-      entity_dict["corrected_value"] = i.get("corrected_value")
-      entity_dict["page_no"] = i.get("page_no")
+      entity_dict = {"name": i.get("entity"),
+                     "value": i.get("value"),
+                     "confidence": i.get("extraction_confidence"),
+                     "corrected_value": i.get("corrected_value"),
+                     "page_no": i.get("page_no")}
       new_list.append(entity_dict)
     # res = dict(ChainMap(*new_list))
     new_json = json.dumps(new_list)

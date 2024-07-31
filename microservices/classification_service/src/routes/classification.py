@@ -32,6 +32,8 @@ from common.utils.docai_helper import get_docai_input
 from common.utils.helper import get_id_from_file_path
 from common.utils.logging_handler import Logger
 
+
+logger = Logger.get_logger(__name__)
 router = APIRouter(prefix="/classification")
 
 FAILED_RESPONSE = {"status": STATUS_ERROR}
@@ -54,13 +56,13 @@ async def classification(payload: ProcessTask, background_task: BackgroundTasks)
   try:
 
     payload = payload.dict()
-    Logger.info(f"classification - payload received {payload}")
+    logger.info(f"classification - payload received {payload}")
     configs = payload.get("configs")
     parser_name = CLASSIFIER
-    Logger.info(
+    logger.info(
       f"classification - Starting extraction for configs={configs}, parser_name={parser_name}")
 
-    Logger.info(f"classification_api starting classification for configs={configs}")
+    logger.info(f"classification_api starting classification for configs={configs}")
     # Making prediction
     processor, dai_client, input_uris = get_docai_input(parser_name, configs)
 
@@ -68,14 +70,14 @@ async def classification(payload: ProcessTask, background_task: BackgroundTasks)
     if not processor:
       # update status for all documents
       default_class = get_classification_default_class()
-      Logger.warning(
+      logger.warning(
         f"classification_api - No classification parser defined, exiting classification, "
         f"using {default_class}")
       f_uids = []
       for uri in input_uris:
         case_id, uid = get_id_from_file_path(uri)
         if uid is None:
-          Logger.error(f"classification_api - Cannot find document with url = {uri}")
+          logger.error(f"classification_api - Cannot find document with url = {uri}")
           continue
 
         #To refactor (one service waiting another one sync)
@@ -94,14 +96,14 @@ async def classification(payload: ProcessTask, background_task: BackgroundTasks)
 
     background_task.add_task(batch_classification,
                              processor, dai_client, input_uris)
-    Logger.info(f"classification_api  response: {SUCCESS_RESPONSE}")
+    logger.info(f"classification_api  response: {SUCCESS_RESPONSE}")
     return SUCCESS_RESPONSE
 
   except Exception as e:
-    Logger.error(f"{e} while classification ")
-    Logger.error(e)
+    logger.error(f"{e} while classification ")
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     # DocumentStatus api call
     # update_classification_status(case_id, uid, STATUS_ERROR)
     raise HTTPException(status_code=500, detail=FAILED_RESPONSE) from e

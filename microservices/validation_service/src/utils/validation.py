@@ -26,6 +26,7 @@ from common.utils.logging_handler import Logger
 from common.db_client import bq_client
 import traceback
 
+logger = Logger.get_logger(__name__)
 bigquery_client = bq_client()
 
 
@@ -89,14 +90,14 @@ def get_values(documentlabel, cid, uid, entity):
     merge_query = f"and case_id ='{cid}' and uid='{uid}'"
     validation_score,final_dict = \
     get_scoring(data,merge_query,documentlabel,entity)
-    Logger.info(f"Validation completed for document with case id {cid}"
+    logger.info(f"Validation completed for document with case id {cid}"
                 f"and uid {uid}")
   except Exception as e:  # pylint: disable=broad-except
-    Logger.error("Validation error:")
-    Logger.error(e)
+    logger.error("Validation error:")
+    logger.error(e)
 
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     print(err)
 
     validation_score = None
@@ -127,7 +128,7 @@ def get_scoring(data, merge_query, documentlabel, entity):
   validation_score = 0
   validation_rule = data.get(documentlabel)
   if not validation_rule:
-    Logger.warning(f"Unable to find validation rule for document type: {documentlabel}")
+    logger.warning(f"Unable to find validation rule for document type: {documentlabel}")
     validation_score = 0 # Nothing To Validate
     return validation_score, entity
 
@@ -141,7 +142,7 @@ def get_scoring(data, merge_query, documentlabel, entity):
       query_results = bigquery_client.query((query))
       df = query_results.to_dataframe()
     except Exception as e:  # pylint: disable=broad-except
-      Logger.error(e)
+      logger.error(e)
       df = pd.DataFrame()
     df = df.drop_duplicates()
     validation_score = validation_score + len(df)

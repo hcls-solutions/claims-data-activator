@@ -28,6 +28,8 @@ from utils.json_matching.match_json import compare_json
 import copy
 import traceback
 
+logger = Logger.get_logger(__name__)
+
 router = APIRouter()
 SUCCESS_RESPONSE = {"status": STATUS_SUCCESS}
 FAILED_RESPONSE = {"status": STATUS_ERROR}
@@ -46,7 +48,7 @@ def get_matching_score(af_dict: dict, sd_dict: dict):
   matching = compare_json(af_dict["entities"], sd_dict["entities"],
                           sd_dict["document_class"], af_dict["document_class"],
                           af_dict["context"])
-  Logger.info(matching)
+  logger.info(matching)
   print("Matching Output: ", matching)
   if matching:  # TODO fix if matching not setup, just skip
     if len(matching) == 0:
@@ -65,7 +67,7 @@ def update_matching_status(case_id: str,
   """
     Makes api calls to DSM service to update document status for matching
   """
-  Logger.info(f"Updating Matching status for case_id {case_id} and uid {uid}")
+  logger.info(f"Updating Matching status for case_id {case_id} and uid {uid}")
   if status == STATUS_SUCCESS:
     base_url = "http://document-status-service/document_status_service/"\
       "v1/update_matching_status"
@@ -96,7 +98,7 @@ async def match_document(case_id: str, uid: str):
     """
   try:
     # Disabling Matching for now
-    Logger.info(f"Matching document with case_id {case_id}"
+    logger.info(f"Matching document with case_id {case_id}"
                 f" and uid {uid}")
     return {"status": STATUS_SUCCESS, "score": 0}
     # # Temp Disable Matching For Now
@@ -106,7 +108,7 @@ async def match_document(case_id: str, uid: str):
         active="active").get()
 
     if af_doc and af_doc.entities is not None:
-      Logger.info(f"Matching document with case_id {case_id}"
+      logger.info(f"Matching document with case_id {case_id}"
         f" and uid {uid} with the corresponding Application form")
 
       #Get Supporting Document data from DB
@@ -117,7 +119,7 @@ async def match_document(case_id: str, uid: str):
 
       #getting json matching result
       matching_result = get_matching_score(af_dict, sd_dict)
-      Logger.info(matching_result)
+      logger.info(matching_result)
       print("matching_result:")
       print(matching_result)
 
@@ -137,13 +139,13 @@ async def match_document(case_id: str, uid: str):
         print(f"dsm_status = {dsm_status}")
 
         if dsm_status.status_code == status.HTTP_200_OK:
-          Logger.info(
+          logger.info(
               f"Matching document with case_id {case_id} and "
                 f"uid {uid} was successful"
           )
           return {"status": STATUS_SUCCESS, "score": overall_score}
         else:
-          Logger.error(
+          logger.error(
               f"Matching document with case_id {case_id} and "
                 f"uid {uid} Failed. Doc status not updated"
           )
@@ -154,13 +156,13 @@ async def match_document(case_id: str, uid: str):
       else:
         # TODO Temp workaround
         return {"status": STATUS_SUCCESS, "score": 0}
-        # Logger.error(f"Matching document with case_id {case_id} and uid {uid}"\
+        # logger.error(f"Matching document with case_id {case_id} and uid {uid}"\
         #   f" Failed. Error in geting Matching score")
         # raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="Document Matching failed"\
         #   "Error in getting matching score")
 
     else:
-      Logger.warning(f"Matching with case_id {case_id} and uid {uid}: "
+      logger.warning(f"Matching with case_id {case_id} and uid {uid}: "
           f"Application form with entities not found with given case_id: {case_id}")
       return {"status": STATUS_SUCCESS, "score": 0}
       # No matching => Nothing to match unless it is Configured!
@@ -168,23 +170,23 @@ async def match_document(case_id: str, uid: str):
 
   except HTTPException as e:
     dsm_status = update_matching_status(case_id, uid, STATUS_ERROR)
-    Logger.error(
+    logger.error(
         f"HTTPException while matching document with case_id {case_id} and uid {uid}"
     )
     print(e)
-    Logger.error(e)
-    Logger.error(traceback.format_exc().replace("\n", " "))
+    logger.error(e)
+    logger.error(traceback.format_exc().replace("\n", " "))
     raise e
 
   except Exception as e:
     print("ERROR: match_document error:")
 
     dsm_status = update_matching_status(case_id, uid, STATUS_ERROR)
-    Logger.error(
+    logger.error(
         f"Error while matching document with case_id {case_id} and uid {uid}")
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     print(err)
 
     raise HTTPException(status_code=500, detail=str(e)) from e

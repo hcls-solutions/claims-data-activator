@@ -37,7 +37,7 @@ import fireo
 import traceback
 
 router = APIRouter()
-
+logger = Logger.get_logger(__name__)
 
 @router.post("/reassign_case_id")
 async def reassign_case_id(reassign: Reassign, response: Response):
@@ -80,7 +80,7 @@ async def reassign_case_id(reassign: Reassign, response: Response):
     #If document with given uid does not exist send 404
     # not found error
     if document is None:
-      Logger.error(f"document to be reassigned with case_id {old_case_id}"
+      logger.error(f"document to be reassigned with case_id {old_case_id}"
                    f" and uid {uid} does not exist in database")
       response.status_code = status.HTTP_404_NOT_FOUND
       response.body = f"document to be reassigned with case_id {old_case_id} " \
@@ -96,7 +96,7 @@ async def reassign_case_id(reassign: Reassign, response: Response):
     #application with new case case_id does not exist in db
     #send 404 not found error
     if not new_case_id_document:
-      Logger.error(
+      logger.error(
           f"Document with case_id {new_case_id} not found for reassign")
       response.status_code = status.HTTP_404_NOT_FOUND
       response.body = f"Application with case_id {new_case_id}" \
@@ -169,7 +169,7 @@ async def reassign_case_id(reassign: Reassign, response: Response):
                                               entities)
     if update_bq == [] and response_process_task.status_code == 202:
 
-      Logger.info(
+      logger.info(
           f"ressign case_id from {old_case_id} to {new_case_id} is successfull")
       return {"status": STATUS_SUCCESS, "url": document.url}
     else:
@@ -179,7 +179,7 @@ async def reassign_case_id(reassign: Reassign, response: Response):
 
   except Exception as e:
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
@@ -219,6 +219,6 @@ def call_process_task(case_id: str, uid: str, document_class: str,
   }
   payload = {"configs": [data]}
   base_url = f"http://upload-service/{PROCESS_TASK_API_PATH}?is_reassign=true"
-  Logger.info(f"Params for process task {payload}")
+  logger.info(f"Params for process task {payload}")
   response = requests.post(base_url, json=payload)
   return response

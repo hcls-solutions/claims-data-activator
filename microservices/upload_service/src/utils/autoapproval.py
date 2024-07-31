@@ -26,6 +26,8 @@ from common.config import get_extraction_confidence_threshold
 from common.config import get_extraction_confidence_threshold_per_field
 from common.utils.logging_handler import Logger
 
+logger = Logger.get_logger(__name__)
+
 
 def get_autoapproval_status(validation_score, extraction_score,
     min_extraction_score_per_field, matching_score,
@@ -49,7 +51,7 @@ def get_autoapproval_status(validation_score, extraction_score,
 
   data = AUTO_APPROVAL_MAPPING
 
-  Logger.info(
+  logger.info(
     f"get_autoapproval_status with Validation_Score:{validation_score}, "
     f"Extraction_score: {extraction_score}, "
     f"Extraction_score per field (min): {min_extraction_score_per_field}, "
@@ -69,7 +71,7 @@ def get_autoapproval_status(validation_score, extraction_score,
 
     if extraction_score > global_extraction_confidence_threshold and \
         min_extraction_score_per_field > global_extraction_confidence_threshold_per_field:
-      Logger.info(f"Passing threshold configured for Auto-Approve with "
+      logger.info(f"Passing threshold configured for Auto-Approve with "
                   f"min_extraction_score_per_field {min_extraction_score_per_field} > "
                   f"{global_extraction_confidence_threshold_per_field} and "
                   f"extraction_score {extraction_score} >"
@@ -77,7 +79,7 @@ def get_autoapproval_status(validation_score, extraction_score,
       flag = "yes"
       status = STATUS_APPROVED
 
-    Logger.info(f"Status: {status}")
+    logger.info(f"Status: {status}")
     return status, flag
 
   print(f"data[document_label]={data[document_label]}")
@@ -95,7 +97,7 @@ def get_autoapproval_status(validation_score, extraction_score,
       if check_scores():
         flag = "yes"
         status = STATUS_APPROVED
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
         return status, flag
 
     else:
@@ -103,16 +105,16 @@ def get_autoapproval_status(validation_score, extraction_score,
 
       if check_scores():
         status = STATUS_REVIEW
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
         return status, flag
 
       else:
         status = STATUS_REJECTED
-        Logger.info(f"Status: {status}")
+        logger.info(f"Status: {status}")
       return status, flag
 
 
   else:
     status = STATUS_REVIEW
-    Logger.info(f"Status: {status}")
+    logger.info(f"Status: {status}")
     return status, flag

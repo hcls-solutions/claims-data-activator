@@ -1,5 +1,5 @@
 """
-Copyright 2023 Google LLC
+Copyright 2024 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,19 +26,21 @@ import requests
 
 import common.config
 from common.utils.logging_handler import Logger
+logger = Logger.get_logger(__name__)
+
 
 
 def extract_documents(docs: List[Dict], parser_name: str):
   """Perform extraction for application or supporting documents"""
-  Logger.info(f"extract_documents with {len(docs)} docs={docs}, "
+  logger.info(f"extract_documents with {len(docs)} docs={docs}, "
               f"parser_name={parser_name}")
 
   extr_result = send_extraction_request(docs, parser_name)
 
   if extr_result and extr_result.status_code == 200:
-    Logger.info(f"extract_documents - response received {extr_result}")
+    logger.info(f"extract_documents - response received {extr_result}")
   else:
-    Logger.error(
+    logger.error(
         f"extraction failed for "
         f"parser_name={parser_name} docs={docs}")
 
@@ -48,15 +50,15 @@ def send_extraction_request(uids: List[Dict], parser_name: str):
   try:
     base_url = f"{common.config.get_extraction_service_url()}/extraction_api"
     configs = []
-    Logger.info(f"send_extraction_request - Received  {len(uids)} uids.")
+    logger.info(f"send_extraction_request - Received  {len(uids)} uids.")
     for uid in uids:
       config = {"uid": uid}
       configs.append(config)
     payload = {"configs": configs, "parser_name": parser_name}
-    Logger.info(
+    logger.info(
         f"send_extraction_request sending to base_url={base_url}, payload={payload}")
     response = requests.post(base_url, json=payload)
-    Logger.info(f"send_extraction_request response {response} for {payload}")
+    logger.info(f"send_extraction_request response {response} for {payload}")
     return response
   except requests.exceptions.RequestException as err:
-    Logger.error(err)
+    logger.error(err)
