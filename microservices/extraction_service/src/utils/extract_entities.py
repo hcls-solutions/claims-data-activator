@@ -655,8 +655,8 @@ def test_extract():
     documents = {}
     desired_entities_list = []
 
-    local_json_path = "pg4_pa_form_cda_package_15_dp-0.json"
-    uri = "gs://cda-002-engine-document-upload/b1fc750c-4f99-11ef-9655-ea3db593be0a/fePJ1taRL0oj8SXOnj3o/pg4_pa_form_cda_package_15_dp.pdf"
+    local_json_path = "...json"
+    uri = "gs://..-upload...pdf"
     with open(local_json_path, "r") as file:
       json_content = file.read()
 
@@ -664,6 +664,3 @@ def test_extract():
     documents[uri] = [document]
     specialized_parser_extraction(documents, desired_entities_list)
     # handle_extraction_results(desired_entities_list)
-
-
-# test()
