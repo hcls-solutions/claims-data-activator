@@ -33,6 +33,8 @@ from typing import Any
 
 logger = Logger.get_logger(__name__)
 storage_client = storage.Client()
+
+
 class DocumentaiUtils:
     def __init__(self, project_number: str, api_location: str):
         self.project_number = project_number
@@ -298,6 +300,8 @@ def get_key_values_dic(entity: documentai.Document.Entity,
     if not existing_entity:
         document_entities[key] = []
         existing_entity = document_entities.get(key)
+    else:
+        existing_entity.append(new_entity_value)
 
     if len(entity.get("properties", [])) > 0:
         # Sub-labels (only down one level)
