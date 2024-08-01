@@ -31,6 +31,7 @@ The configuration file for the script is post_processing_config.py
 
 logger = Logger.get_logger(__name__)
 
+
 def list_to_string(string_list):
   '''Function to join a list of string characters to a single string
   Input:

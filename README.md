@@ -63,7 +63,7 @@ You will need to upgrade Cloud Shell (or local machine) terraform version using 
 ### Create New Project
 * You will need access the GCP environment and project owner rights.
 * Installation will happen in the newly created project.
-* [Optional] If you want to setup Document AI processors in a separate project (recommended), then you will need two separate projects.
+* _[Optional]_ If you want to setup Document AI processors in a separate project (recommended), then you will need two separate projects.
 
 ## Installation
 ### Setting up
@@ -77,7 +77,7 @@ export PROJECT_ID=<YOUR_PROJECT_ID>
 gcloud config set project $PROJECT_ID
 ```
 
-* [Optional] Set env variable for _DOCAI_PROJECT_ID_
+* _[Optional]_ Set env variable for _DOCAI_PROJECT_ID_
   When deploying processors to a different Project, you can set `DOCAI_PROJECT_ID`.
   However, If you are deploying CDA engine and already have DOCAI project setup and
   running as a result from the previous installation, DO NOT set `DOCAI_PROJECT_ID` variable and leave it blank.
