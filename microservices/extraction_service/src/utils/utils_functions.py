@@ -249,6 +249,8 @@ def default_entities_extraction(parser_data, default_entities):
         else:
           value_coordinates = []
 
+        if key not in parser_entities_dict:
+          parser_entities_dict[key] = []
         parser_entities_dict[key].append((val, confidence, value_coordinates))
 
   entity_dict = {}
