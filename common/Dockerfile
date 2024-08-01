@@ -1,8 +1,6 @@
-# changed from slim for FireO
-FROM python:3.7-slim
+FROM python:3.10-slim
 
 WORKDIR /opt
-
 
 # needed for backports-datetime-fromisoformat in fireo
 RUN apt-get update
