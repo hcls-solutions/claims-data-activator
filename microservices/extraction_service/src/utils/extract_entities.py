@@ -28,8 +28,6 @@ from google.api_core.operation import Operation
 from google.cloud import documentai_v1 as documentai
 from google.cloud import storage
 
-from common.utils.docai_warehouse_helper import process_document
-from common.utils.document_ai_utils import get_key_values_dic
 from common import models
 from common.config import PDF_MIME_TYPE
 from common.config import STATUS_ERROR
@@ -41,19 +39,18 @@ from common.docai_config import DOCAI_ATTRIBUTES_TO_IGNORE
 from common.docai_config import DOCAI_OUTPUT_BUCKET_NAME
 from common.docai_config import ExtractionOutput
 from common.utils import process_extraction_result_helper
+from common.utils.docai_warehouse_helper import process_document
+from common.utils.document_ai_utils import get_key_values_dic
 from common.utils.format_data_for_bq import format_data_for_bq
 from common.utils.helper import get_document_by_uri, split_uri_2_bucket_prefix
 from common.utils.helper import split_uri_2_path_filename
 from common.utils.logging_handler import Logger
 from common.utils.stream_to_bq import stream_document_to_bigquery
-from . import utils_functions
-from .change_json_format import correct_json_format_for_db
-from .change_json_format import get_json_format_for_processing
-from .correct_key_value import data_transformation
-from .utils_functions import clean_form_parser_keys
-from .utils_functions import extraction_accuracy_calc
-from .utils_functions import form_parser_entities_mapping
-from .utils_functions import strip_value
+from utils import utils_functions
+from utils.change_json_format import get_json_format_for_processing
+from utils.utils_functions import clean_form_parser_keys, extraction_accuracy_calc, \
+    form_parser_entities_mapping, \
+    strip_value
 
 warnings.simplefilter(action="ignore")
 
@@ -240,12 +237,10 @@ def specialized_parser_extraction_from_json(data, db_document: models.Document):
       db_document.document_class)
 
   # extract dl entities
-  extracted_entity_dict = utils_functions.entities_extraction(data,
-                                                              mapping_dict,
-                                                              db_document.document_class)
+  extracted_entity_dict = utils_functions.entities_extraction(data, mapping_dict)
 
   # Create a list of entities dicts
-  specialized_parser_entity_list = [v for k, v in extracted_entity_dict.items()]
+  specialized_parser_entity_list = [item for sublist in extracted_entity_dict.values() for item in sublist]
 
   # this can be removed while integration
   # save extracted entities json
@@ -308,6 +303,8 @@ def get_callback_fn(operation: Operation, processor_type: str):
         raise ValueError(
             f"post_process_extract - Batch Process Failed: {metadata.state_message}")
 
+      logger.info(f"post_process_extract - processor_type={processor_type}")
+
       documents = {}  # Contains per processed document, keys are path to original document
 
       # One process per Input Document
@@ -352,7 +349,8 @@ def get_callback_fn(operation: Operation, processor_type: str):
             documents[input_gcs_source] = []
           documents[input_gcs_source].append(document)
 
-          stream_data_to_documentai_warehouse(document, input_gcs_source)
+          # TODO add streaming to Vertex
+          # stream_data_to_documentai_warehouse(document, input_gcs_source)
 
       logger.info(
           f"post_process_extract - Loaded {sum([len(documents[x]) for x in documents if isinstance(documents[x], list)])} DocAI document objects retrieved from json. ")
@@ -362,6 +360,7 @@ def get_callback_fn(operation: Operation, processor_type: str):
         logger.info(
             f"post_process_extract - Specialized parser results handling"
             f" for {len(documents)} document(s).")
+
         specialized_parser_extraction(documents,
                                       desired_entities_list)
       elif processor_type == "FORM_PARSER_PROCESSOR":
@@ -369,6 +368,9 @@ def get_callback_fn(operation: Operation, processor_type: str):
                     f" {len(documents)} document(s).")
         form_parser_extraction(documents,
                                desired_entities_list)
+      else:
+          logger.warning(f"processor_type={processor_type} is not supported yet.")
+
       handle_extraction_results(desired_entities_list)
 
     except Exception as ex:
@@ -634,20 +636,10 @@ async def extract_entities(processor: documentai.types.processor.Processor,
 def post_processing(uid, desired_entities_list, ocr_text, flag):
   final_extracted_entities = desired_entities_list
 
-  input_dict = get_json_format_for_processing(final_extracted_entities)
-  input_dict, output_dict = data_transformation(input_dict)
-  final_extracted_entities = correct_json_format_for_db(
-      output_dict, final_extracted_entities)
-  # with open("{}.json".format(os.path.join(mapped_extracted_entities,
-  #         gcs_doc_path.split('/')[-1][:-4])),
-  #           "w") as outfile:
-  #     json.dump(final_extracted_entities, outfile, indent=4)
-
   # extraction accuracy calculation
   extraction_score, extraction_status, extraction_field_min_score = \
-    extraction_accuracy_calc(final_extracted_entities, flag)
-  # print(final_extracted_entities)
-  # print(document_extraction_confidence)
+    extraction_accuracy_calc(desired_entities_list, flag)
+
   logger.info(f"Extraction completed for {uid}:  "
               f"extraction_score={extraction_score},"
               f" extraction_status={extraction_status}, "
@@ -658,3 +650,21 @@ def post_processing(uid, desired_entities_list, ocr_text, flag):
                           extraction_status=extraction_status,
                           extraction_field_min_score=extraction_field_min_score,
                           extraction_score=extraction_score, ocr_text=ocr_text)
+
+
+def test():
+    documents = {}
+    desired_entities_list = []
+
+    bucket = storage_client.bucket("cda-prior-auth-02-docai-output")
+    blob = bucket.blob("extractor_out_2024-07-31_08-29-13-876949/18443872053756148063/0/bsc-dme-pa-form-0.json")
+
+    document = documentai.Document.from_json(blob.download_as_bytes(),
+                                             ignore_unknown_fields=True)
+    documents["gs://cda-prior-auth-02-document-upload/e6c606c8-4f16-11ef-b49c-564851111573/jN5Mm9L2TEw6C0BC8WP9/bsc-dme-pa-form.pdf"] = [document]
+    specialized_parser_extraction(documents,
+                                  desired_entities_list)
+    print("x")
+    # handle_extraction_results(desired_entities_list)
+
+

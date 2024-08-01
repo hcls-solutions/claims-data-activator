@@ -169,12 +169,13 @@ def entities_extraction_new(parser_data):
 
   return parser_entities_dict
 
-def default_entities_extraction(parser_data, default_entities, doc_type):
+
+def default_entities_extraction(parser_data, default_entities):
   """
    This function extracted default entities
    Parameters
    ----------
-   parser_entities: Specialized parser entities
+   parser_data: Specialized parser entities
    default_entities: Default entities that need to extract from parser entities
    Returns : Default entites dict
    -------
@@ -202,9 +203,10 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
       #   logger.info("Debugging ")
     else:
       val = strip_value(val)
-    parser_entities_dict[key] = [val, confidence]
 
-    #TODO Fully refactor this
+    if key not in parser_entities_dict:
+      parser_entities_dict[key] = []
+
     if len(each_entity.get("properties", [])) == 0:
        #Flat labels
        pa = each_entity.get("pageAnchor")
@@ -219,7 +221,7 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
        else:
          value_coordinates = []
 
-       parser_entities_dict[key] = [val, confidence, value_coordinates]
+       parser_entities_dict[key].append((val, confidence, value_coordinates))
     else:
       # For Nested Labels
       for prop in each_entity.get("properties", []):
@@ -227,7 +229,6 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
                                prop.get("mentionText", ""), \
                                prop.get("normalizedValue", ""), \
                                round(prop.get("confidence", 0), 2)
-        #TODO Refactor throw all away and replace with generic logic
         if isinstance(normalizedVal, dict):
           if "booleanValue" in normalizedVal.keys():
             val = normalizedVal.get("booleanValue")
@@ -248,28 +249,31 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
         else:
           value_coordinates = []
 
-        parser_entities_dict[key] = [val, confidence, value_coordinates]
+        parser_entities_dict[key].append((val, confidence, value_coordinates))
 
   entity_dict = {}
 
   # create default entities
   for key in default_entities:
     if key in parser_entities_dict:
-      entity_dict[default_entities[key][0]] = {
-          "entity": default_entities[key][0],
-          "value": parser_entities_dict[key][0],
-          "extraction_confidence": parser_entities_dict[key][1],
-          "value_coordinates": parser_entities_dict[key][2],
-          "manual_extraction": False,
-          "key_coordinates": parser_entities_dict[key][2],
-          "corrected_value": None,
-          "page_no": int(page_no + 1),
-          "page_width": int(pages_dimensions[page_no]["width"]),
-          "page_height": int(pages_dimensions[page_no]["height"])
-      }
+      entity_dict[default_entities[key][0]] = []
+      for parser_key_entry in parser_entities_dict[key]:
+        entity = {
+            "entity": default_entities[key][0],
+            "value": parser_key_entry[0],
+            "extraction_confidence": parser_key_entry[1],
+            "value_coordinates": parser_key_entry[2],
+            "manual_extraction": False,
+            "key_coordinates": parser_key_entry[2],
+            "corrected_value": None,
+            "page_no": int(page_no + 1),
+            "page_width": int(pages_dimensions[page_no]["width"]),
+            "page_height": int(pages_dimensions[page_no]["height"])
+        }
+        entity_dict[default_entities[key][0]].append(entity)
     else:
       # Entity not present
-      entity_dict[default_entities[key][0]] = {
+      entity_dict[default_entities[key][0]] = [{
           "entity": default_entities[key][0], "value": None,
           "extraction_confidence": None,
           "value_coordinates": [],
@@ -280,19 +284,8 @@ def default_entities_extraction(parser_data, default_entities, doc_type):
           "page_width": None,
           "page_height": None
 
-      }
+      }]
 
-  if doc_type == "utility_bill":
-    if "supplier_address" in parser_entities_dict:
-      if parser_entities_dict["supplier_address"][0] == "":
-        if "receiver_address" in parser_entities_dict \
-            and parser_entities_dict["receiver_address"][0] != "":
-          entity_dict["reciever address"]["value"] = \
-            parser_entities_dict["receiver_address"][0]
-        else:
-          if "service_address" in parser_entities_dict:
-            entity_dict["reciever address"]["value"] = \
-              parser_entities_dict["service_address"][0]
   return entity_dict
 
 
@@ -367,14 +360,13 @@ def derived_entities_extraction(parser_data, derived_entities):
   return derived_entities_extracted_dict
 
 
-def entities_extraction(parser_data, required_entities, doc_type):
+def entities_extraction(parser_data, required_entities):
   """
     This function reads information of default and derived entities
     Parameters
     ----------
     parser_data: specialized parser result
     required_entities: required extracted entities
-    doc_type: Document type
     Returns: Required entities dict
     -------
   """
@@ -388,7 +380,7 @@ def entities_extraction(parser_data, required_entities, doc_type):
   print(f"derived_entities={derived_entities}")
   # Extract default entities
   entity_dict = default_entities_extraction(parser_data,
-                                            default_entities, doc_type)
+                                            default_entities)
   logger.info("Default entities created from Specialized parser response")
   # if any derived entities then extract them
   if derived_entities:
