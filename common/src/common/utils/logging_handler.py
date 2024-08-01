@@ -20,21 +20,13 @@ import os
 import sys
 import google.cloud.logging
 
-CLOUD_LOGGING_ENABLED = bool(
-  os.getenv("CLOUD_LOGGING_ENABLED", "true").lower() in ("true",))
-"""class and methods for logs handling.
-Sample usage:
->>> from common.utils.logging_handler import logger
+CLOUD_LOGGING_ENABLED = True
 
->>> logger.get_logger(__file__)
-
->>> def my_function(){
->>>   logger.info("")
->>> }
-"""
 if CLOUD_LOGGING_ENABLED:
   client = google.cloud.logging.Client()
   client.setup_logging()
+  root_logger = logging.getLogger()
+  root_logger.setLevel(logging.DEBUG)
   logging.basicConfig(format="%(asctime)s:%(levelname)s:%(message)s",
                       level=logging.INFO)
 else:
@@ -54,7 +46,9 @@ class Logger:
     log_format = "%(levelname)s: [%(name)s:%(lineno)d - " \
                  "%(funcName)s()] %(message)s"
     handler.setFormatter(logging.Formatter(log_format))
+    handler.setLevel(logging.DEBUG)
     self.logger.addHandler(handler)
+    self.logger.setLevel(logging.DEBUG)
     self.logger.propagate = False
 
   @classmethod
