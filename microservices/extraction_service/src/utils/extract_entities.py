@@ -287,8 +287,7 @@ def specialized_parser_extraction(
         entities.append(post_processing(db_document.uid,
                                         specialized_parser_entities_list, data.get("text"), True))
       except Exception as e:
-        logger.error(
-            f"specialized_parser_extraction - Error for {input_gcs_source}:  {e}")
+        logger.error(f"specialized_parser_extraction - Error for {input_gcs_source}:  {e}")
         err = traceback.format_exc().replace("\n", " ")
         logger.error(err)
 
@@ -652,19 +651,19 @@ def post_processing(uid, desired_entities_list, ocr_text, flag):
                           extraction_score=extraction_score, ocr_text=ocr_text)
 
 
-def test():
+def test_extract():
     documents = {}
     desired_entities_list = []
 
-    bucket = storage_client.bucket("cda-prior-auth-02-docai-output")
-    blob = bucket.blob("extractor_out_2024-07-31_08-29-13-876949/18443872053756148063/0/bsc-dme-pa-form-0.json")
+    local_json_path = "pg4_pa_form_cda_package_15_dp-0.json"
+    uri = "gs://cda-002-engine-document-upload/b1fc750c-4f99-11ef-9655-ea3db593be0a/fePJ1taRL0oj8SXOnj3o/pg4_pa_form_cda_package_15_dp.pdf"
+    with open(local_json_path, "r") as file:
+      json_content = file.read()
 
-    document = documentai.Document.from_json(blob.download_as_bytes(),
-                                             ignore_unknown_fields=True)
-    documents["gs://cda-prior-auth-02-document-upload/e6c606c8-4f16-11ef-b49c-564851111573/jN5Mm9L2TEw6C0BC8WP9/bsc-dme-pa-form.pdf"] = [document]
-    specialized_parser_extraction(documents,
-                                  desired_entities_list)
-    print("x")
+    document = documentai.Document.from_json(json_content, ignore_unknown_fields=True)
+    documents[uri] = [document]
+    specialized_parser_extraction(documents, desired_entities_list)
     # handle_extraction_results(desired_entities_list)
 
 
+# test()
