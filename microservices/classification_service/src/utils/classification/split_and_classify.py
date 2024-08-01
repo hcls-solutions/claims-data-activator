@@ -234,6 +234,7 @@ def get_documents_for_extraction(classification_dic, extraction_dic):
   #  }
   for uri in classification_dic:
     case_id, uid = get_id_from_file_path(uri)
+    logger.info(f"get_documents_for_extraction - uri = {uri}, case_id = {case_id}, uid = {uid}")
     extraction_list = []
     # Splitting
     if len(classification_dic[uri]) > 1:
@@ -284,13 +285,15 @@ def handle_classification_results(documents, result):
             score = documents[uri]["scores"][index]
             result[uri][unique_page]['predicted_score'] = documents[uri]["scores"][index]
             predicted_label = documents[uri]["labels"][index]
+            default_class = get_classification_default_class()
             if score < classification_confidence_threshold:
-                predicted_class = get_classification_default_class()
+                predicted_class = default_class
             else:
                 predicted_class = get_document_class_by_classifier_label(predicted_label)
+                if not predicted_class:
+                    predicted_class = default_class
+
             result[uri][unique_page]['predicted_class'] = predicted_class
-
-
 
     # # Sample raw prediction_result for document that needs to be split:
     # { 'gs://ek-cda-engine-001-document-upload/7ce08d84-1086-11ee-9f25-b66184e8964f/JVkbJf7wLXqLrExC6oq1/Package-combined.pdf':
