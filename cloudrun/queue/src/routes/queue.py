@@ -28,6 +28,8 @@ from common.config import STATUS_SUCCESS
 from common.utils.iap import send_iap_request
 from common.utils.logging_handler import Logger
 
+logger = Logger.get_logger(__name__)
+
 PROJECT_ID = os.environ.get("PROJECT_ID")
 
 # Initializing Firebase client.
@@ -41,18 +43,18 @@ router = APIRouter(prefix="/queue", tags=["Queue"])
 
 @router.post("/publish")
 async def publish_msg(request: Request, response: Response):
-  Logger.info(f"queue - start")
+  logger.info(f"queue - start")
 
   body = await request.body()
   if not body or body == "":
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "Request has no body"
-    Logger.error(response.body)
+    logger.error(response.body)
     return response
 
   try:
     envelope = await request.json()
-    Logger.info(f"Pub/Sub envelope: {envelope}")
+    logger.info(f"Pub/Sub envelope: {envelope}")
 
   except json.JSONDecodeError:
     response.status_code = status.HTTP_400_BAD_REQUEST
@@ -62,20 +64,20 @@ async def publish_msg(request: Request, response: Response):
   if not envelope:
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "No Pub/Sub message received"
-    Logger.error(f"error: {response.body}")
+    logger.error(f"error: {response.body}")
     return response
 
   if not isinstance(envelope, dict) or "message" not in envelope:
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "invalid Pub/Sub message format"
-    Logger.error(f"error: {response.body}")
+    logger.error(f"error: {response.body}")
     return response
 
   # if batch_quota_ready(): # TODO this is not working
   if True:
     pubsub_message = envelope["message"]
     # if doc_count < int(os.environ["BATCH_PROCESS_QUOTA"]):
-    Logger.info(f"queue - Pub/Sub message: {pubsub_message}")
+    logger.info(f"queue - Pub/Sub message: {pubsub_message}")
 
     if isinstance(pubsub_message, dict) and "data" in pubsub_message:
       msg_data = base64.b64decode(
@@ -83,7 +85,7 @@ async def publish_msg(request: Request, response: Response):
       name = json.loads(msg_data)
       payload = name.get("message_list")
       request_body = {"configs": payload}
-      Logger.info(f"queue - Pub/Sub message configs: {request_body}")
+      logger.info(f"queue - Pub/Sub message configs: {request_body}")
       # Sample request body
       # {
       #   "configs": [

@@ -18,9 +18,10 @@ limitations under the License.
 import logging
 import os
 import sys
-from common.config import CLOUD_LOGGING_ENABLED
 import google.cloud.logging
 
+CLOUD_LOGGING_ENABLED = bool(
+  os.getenv("CLOUD_LOGGING_ENABLED", "true").lower() in ("true",))
 """class and methods for logs handling.
 Sample usage:
 >>> from common.utils.logging_handler import logger

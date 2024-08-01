@@ -13,7 +13,7 @@ from fastapi import Response
 from fastapi import status
 from fastapi.concurrency import run_in_threadpool
 from google.cloud import storage
-
+from common.utils.logging_handler import Logger
 from common.config import BUCKET_NAME
 from common.config import START_PIPELINE_FILENAME
 from common.config import STATUS_ERROR
@@ -23,6 +23,8 @@ from common.utils.copy_gcs_documents import copy_blob
 from common.utils.helper import split_uri_2_path_filename
 from common.utils.iap import send_iap_request
 from common.utils.publisher import publish_document
+
+logger = Logger.get_logger(__name__)
 
 # API clients
 gcs = None
@@ -46,7 +48,6 @@ def generate_case_id(folder_name):
   case_id = str(dirs_string) + "_" + str(uuid.uuid1())[:-ll]
   return case_id
 
-from common.utils.logging_handler import Logger
 
 router = APIRouter(prefix="/start-pipeline", tags=["Start Pipeline"])
 
@@ -59,12 +60,12 @@ async def start_pipeline(request: Request, response: Response):
   if not body or body == "":
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "Request has no body"
-    Logger.warning(response.body)
+    logger.warning(response.body)
     return response
 
   try:
     envelope = await request.json()
-    Logger.info(f"Pub/Sub envelope: {envelope}")
+    logger.info(f"Pub/Sub envelope: {envelope}")
 
   except json.JSONDecodeError:
     response.status_code = status.HTTP_400_BAD_REQUEST
@@ -74,19 +75,19 @@ async def start_pipeline(request: Request, response: Response):
   if not envelope:
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "No Pub/Sub message received"
-    Logger.error(f"error: {response.body}")
+    logger.error(f"error: {response.body}")
     return response
 
   if not isinstance(envelope,
                     dict) or "bucket" not in envelope or "name" not in envelope:
     response.status_code = status.HTTP_400_BAD_REQUEST
     response.body = "invalid Pub/Sub message format"
-    Logger.error(f"error: {response.body}")
+    logger.error(f"error: {response.body}")
     return response
 
   bucket_name = envelope['bucket']
   file_uri = envelope['name']
-  Logger.info(f"start_pipeline bucket_name={bucket_name}, file_uri={file_uri}")
+  logger.info(f"start_pipeline bucket_name={bucket_name}, file_uri={file_uri}")
   comment = ""
   context = "california"  # TODO is a temp workaround
 
@@ -94,14 +95,14 @@ async def start_pipeline(request: Request, response: Response):
     event_id = datetime.datetime.utcnow().strftime('%Y-%m-%d-%H-%M-%S')
     dirs, filename = split_uri_2_path_filename(file_uri)
 
-    Logger.info(
+    logger.info(
         f"Received event event_id={event_id} for bucket[{bucket_name}] file_uri=[{file_uri}], filename=[{filename}]")
 
     if filename != START_PIPELINE_FILENAME:
-      Logger.info(f"Skipping action, since waiting for {START_PIPELINE_FILENAME} to trigger pipe-line")
+      logger.info(f"Skipping action, since waiting for {START_PIPELINE_FILENAME} to trigger pipe-line")
       return "", status.HTTP_204_NO_CONTENT
 
-    Logger.info(
+    logger.info(
         f"start_pipeline - Starting pipeline to process documents inside {bucket_name} bucket and "
         f"{dirs} folder with event_id={event_id}")
 
@@ -123,11 +124,11 @@ async def start_pipeline(request: Request, response: Response):
       count = 0
 
       for blob in blob_list:
-        Logger.debug(f"Handling {blob.name}")
+        logger.debug(f"Handling {blob.name}")
         if blob.name and not blob.name.endswith('/') and blob.name != START_PIPELINE_FILENAME:
           mime_type = blob.content_type
           if mime_type not in MIME_TYPES:
-            Logger.info(f"Skipping {blob.name} - not supported mime type: {mime_type} ")
+            logger.info(f"Skipping {blob.name} - not supported mime type: {mime_type} ")
             continue
           d, blob_filename = split_uri_2_path_filename(blob.name)
           dir_name = os.path.split(d)[-1]
@@ -137,7 +138,7 @@ async def start_pipeline(request: Request, response: Response):
           else:
             case_id = case_ids[dir_name]
           count = count + 1
-          Logger.info(
+          logger.info(
               f"start_pipeline - Handling {count}(th) document - case_id={case_id}, file_path={blob.name}, "
               f"file_name={blob_filename}, event_id={event_id}")
 
@@ -145,13 +146,13 @@ async def start_pipeline(request: Request, response: Response):
           output = create_document(case_id, blob.name, context)
           uid = output
           if uid is None:
-            Logger.error(f"Error: could not create a document")
+            logger.error(f"Error: could not create a document")
             raise HTTPException(
                 status_code=500,
                 detail="Error "
                        "in uploading document in gcs bucket")
 
-          Logger.info(f"Created document with uid={uid} for case_id={case_id}, "
+          logger.info(f"Created document with uid={uid} for case_id={case_id}, "
                       f"file_path={blob.name}, file_name={blob_filename}, "
                       f"event_id={event_id}")
           uid_list.append(uid)
@@ -170,13 +171,13 @@ async def start_pipeline(request: Request, response: Response):
             }
             document.system_status = [system_status]
             document.update()
-            Logger.error(f"Error: {result}")
+            logger.error(f"Error: {result}")
             raise HTTPException(
                 status_code=500,
                 detail="Error "
                        "in uploading document in gcs bucket")
 
-          Logger.info(f"File {blob.name} with case_id {case_id} and uid {uid}"
+          logger.info(f"File {blob.name} with case_id {case_id} and uid {uid}"
                       f" uploaded successfully in GCS bucket")
 
           # Update the document upload as success in DB
@@ -199,9 +200,9 @@ async def start_pipeline(request: Request, response: Response):
                 "context": context
             })
           else:
-            Logger.error(f"Could not retrieve document by id {uid}")
+            logger.error(f"Could not retrieve document by id {uid}")
 
-      Logger.info(f"start_pipeline - Uploaded {count} documents and"
+      logger.info(f"start_pipeline - Uploaded {count} documents and"
                   f" sending {len(message_list)} items in message_list")
       # Pushing Message To Pubsub
       pubsub_msg = f"batch moved to bucket"
@@ -210,7 +211,7 @@ async def start_pipeline(request: Request, response: Response):
 
       process_time = time.time() - start_time
       time_elapsed = round(process_time * 1000)
-      Logger.info(f"start_pipeline - completed within {time_elapsed} ms for event_id {event_id} with {count} documents "
+      logger.info(f"start_pipeline - completed within {time_elapsed} ms for event_id {event_id} with {count} documents "
                   f"{message_list}")
 
       return {
@@ -223,9 +224,9 @@ async def start_pipeline(request: Request, response: Response):
       }
 
     except Exception as e:
-      Logger.error(e)
+      logger.error(e)
       err = traceback.format_exc().replace("\n", " ")
-      Logger.error(err)
+      logger.error(err)
       raise HTTPException(
           status_code=500, detail="Error "
                                   "in uploading document") from e
@@ -233,28 +234,27 @@ async def start_pipeline(request: Request, response: Response):
   except HTTPException as e:
     raise e
   except Exception as e:
-    Logger.error(e)
+    logger.error(e)
     err = traceback.format_exc().replace("\n", " ")
-    Logger.error(err)
+    logger.error(err)
     raise HTTPException(
         status_code=500, detail="Error "
                                 "in uploading document") from e
 
 
-
 def create_document(case_id, filename, context, user=None):
   uid = None
   try:
-    Logger.info(f"create_document with case_id = {case_id} filename = {filename} context = {context}")
+    logger.info(f"create_document with case_id = {case_id} filename = {filename} context = {context}")
     base_url = f"{DOCUMENT_STATUS_URL}"
     req_url = f"{base_url}/create_document"
     url = f"{req_url}?case_id={case_id}&filename={filename}&context={context}&user={user}"
-    Logger.info(f"Posting request to {url}")
+    logger.info(f"Posting request to {url}")
     response = send_iap_request(url, method="POST")
     response = response.json()
-    Logger.info(f"Response received ={response}")
+    logger.info(f"Response received ={response}")
     uid = response.get("uid")
   except requests.exceptions.RequestException as err:
-    Logger.error(err)
+    logger.error(err)
 
   return uid

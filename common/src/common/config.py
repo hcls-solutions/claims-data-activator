@@ -88,8 +88,6 @@ DOCUMENT_TYPE_UNKNOWN = "unknown"
 START_PIPELINE_FILENAME = os.environ.get("START_PIPELINE_NAME",
                                          "START_PIPELINE")
 
-CLOUD_LOGGING_ENABLED = bool(
-  os.getenv("CLOUD_LOGGING_ENABLED", "true").lower() in ("true",))
 
 # Global variables
 gcs = None

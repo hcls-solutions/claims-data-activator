@@ -16,7 +16,6 @@ limitations under the License.
 
 
 import json
-import traceback
 from typing import Optional, List
 
 from google.cloud import contentwarehouse_v1
@@ -26,6 +25,9 @@ from google.cloud.contentwarehouse_v1 import CreateDocumentResponse
 
 from .document_ai_utils import DocumentaiUtils
 from common.utils.logging_handler import Logger
+
+logger = Logger.get_logger(__name__)
+
 
 class DocumentWarehouseUtils:
     def __init__(self, project_number: str, api_location: str):
@@ -348,7 +350,7 @@ class DocumentWarehouseUtils:
         docai_document: Optional[docai.Document] = None
     ) -> CreateDocumentResponse:
 
-        Logger.info(f"create_document {display_name}")
+        logger.info(f"create_document {display_name}")
         # Create a client
         client = self.get_document_service_client()
         parent = client.common_location_path(self.project_number, self.api_location)

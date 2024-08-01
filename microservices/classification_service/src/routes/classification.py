@@ -60,7 +60,7 @@ async def classification(payload: ProcessTask, background_task: BackgroundTasks)
     configs = payload.get("configs")
     parser_name = CLASSIFIER
     logger.info(
-      f"classification - Starting extraction for configs={configs}, parser_name={parser_name}")
+      f"classification - Starting classification for configs={configs}, parser_name={parser_name}")
 
     logger.info(f"classification_api starting classification for configs={configs}")
     # Making prediction
