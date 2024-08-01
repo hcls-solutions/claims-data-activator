@@ -7,4 +7,4 @@ google-cloud-secret-manager==2.5.0
 google-cloud-pubsub==2.10.0
 google-cloud-storage==2.0.0
 google-cloud-logging==2.7.0
-python-multipart==0.0.5
+python-multipart==0.0.7
