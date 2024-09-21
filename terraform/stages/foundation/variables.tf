@@ -49,6 +49,10 @@ variable "iap_secret_name" {
   default = "cda-iap-secret"
 }
 
+variable "repo_name" {
+  type        = string
+}
+
 variable "region" {
   type        = string
   description = "GCP Region"

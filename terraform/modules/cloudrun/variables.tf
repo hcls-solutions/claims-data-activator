@@ -20,6 +20,11 @@ variable "project_id" {
   description = "project ID"
 }
 
+variable "repo_name" {
+  type        = string
+  description = "Artifacts Registry name"
+}
+
 variable "name" {
   type        = string
   description = "Service name"

@@ -30,28 +30,25 @@ resource "google_storage_bucket" "log-bucket" {
 
 # Creating a custom service account for cloud run
 module "cloud-run-service-account" {
-  source       = "github.com/terraform-google-modules/cloud-foundation-fabric/modules/iam-service-account/"
-  project_id   = var.project_id
-  name         = "cloudrun-${var.name}-sa"
+  source  = "terraform-google-modules/service-accounts/google"
+  version = "~> 4.0"
+  # fetched from previous module to explicitely express dependency
+  project_id = var.project_id
+  names         = ["cloudrun-${var.name}-sa"]
   display_name = "This is service account for cloud run ${var.name}"
 
-  iam = {
-    "roles/iam.serviceAccountUser" = []
-  }
+  project_roles = [
+    "${var.project_id}=>roles/eventarc.eventReceiver",
+    "${var.project_id}=>roles/pubsub.publisher",
+    "${var.project_id}=>roles/firebase.admin",
+    "${var.project_id}=>roles/firestore.serviceAgent",
+    "${var.project_id}=>roles/iam.serviceAccountUser",
+    "${var.project_id}=>roles/iam.serviceAccountTokenCreator",
+    "${var.project_id}=>roles/run.invoker",
+    "${var.project_id}=>roles/pubsub.serviceAgent",
+    "${var.project_id}=>roles/secretmanager.secretAccessor"
+  ]
 
-  iam_project_roles = {
-    (var.project_id) = [
-      "roles/eventarc.eventReceiver",
-      "roles/pubsub.publisher",
-      "roles/firebase.admin",
-      "roles/firestore.serviceAgent",
-      "roles/iam.serviceAccountUser",
-      "roles/iam.serviceAccountTokenCreator",
-      "roles/run.invoker",
-      "roles/pubsub.serviceAgent",
-      "roles/secretmanager.secretAccessor"
-    ]
-  }
 }
 
 # Build Cloudrun image
@@ -74,6 +71,8 @@ resource "null_resource" "build-common-image" {
       join("", [
         "--substitutions=",
         "_PROJECT_ID='${var.project_id}',",
+        "_REPO_NAME='${var.repo_name}',",
+        "_REGION='${var.region}',",
         "_IMAGE='common'",
       ])
     ])
@@ -105,6 +104,8 @@ resource "null_resource" "build-cloudrun-image" {
       join("", [
         "--substitutions=",
         "_PROJECT_ID='${var.project_id}',",
+        "_REPO_NAME='${var.repo_name}',",
+        "_REGION='${var.region}',",
         "_IMAGE='${var.name}-image'",
       ])
     ])
@@ -150,7 +151,7 @@ resource "google_cloud_run_service" "cloudrun-service" {
     spec {
       timeout_seconds = 600
       containers {
-        image = "gcr.io/${var.project_id}/${var.name}-image:latest" #Image to connect pubsub to cloud run to processtask API and fetch data from firestore
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.name}-image:latest" #Image to connect pubsub to cloud run to processtask API and fetch data from firestore
         ports {
           container_port = 8000
         }

@@ -192,16 +192,23 @@ module "gke" {
   service_account_name = var.service_account_name_gke
 
   # See latest stable version at https://cloud.google.com/kubernetes-engine/docs/release-notes-stable
-  kubernetes_version = "1.28.9-gke.1000000"
+  kubernetes_version = "1.28.13-gke.1006000"
 
 }
 
+resource "google_artifact_registry_repository" "cda-ar" {
+  repository_id = var.repo_name
+  format        = "DOCKER"
+  location      = var.region
+  description   = "CDA Docker repository"
+}
 
 module "cloudrun-queue" {
   depends_on = [
     time_sleep.wait_for_project_services,
     module.vpc_network,
-    module.vpc_serverless_connector
+    module.vpc_serverless_connector,
+    google_artifact_registry_repository.cda-ar
   ]
   source             = "../../modules/cloudrun"
   project_id         = var.project_id
@@ -211,13 +218,15 @@ module "cloudrun-queue" {
   vpc_connector_name = var.vpc_connector_name
   protocol           = local.cloud_run_protocol
   iap_secret_name    = var.iap_secret_name
+  repo_name          = var.repo_name
 }
 
 module "cloudrun-start-pipeline" {
   depends_on = [
     time_sleep.wait_for_project_services,
     module.vpc_network,
-    module.vpc_serverless_connector
+    module.vpc_serverless_connector,
+    google_artifact_registry_repository.cda-ar
   ]
   source             = "../../modules/cloudrun"
   project_id         = var.project_id
@@ -227,6 +236,8 @@ module "cloudrun-start-pipeline" {
   vpc_connector_name = var.vpc_connector_name
   protocol           = local.cloud_run_protocol
   iap_secret_name    = var.iap_secret_name
+  repo_name          = var.repo_name
+
 }
 
 
@@ -235,7 +246,8 @@ data "google_cloud_run_service" "queue-run" {
   depends_on = [
     time_sleep.wait_for_project_services,
     module.vpc_network,
-    module.cloudrun-queue
+    module.cloudrun-queue,
+    google_artifact_registry_repository.cda-ar
   ]
   name     = "queue-cloudrun"
   location = local.region
@@ -352,7 +364,7 @@ module "validation_bigquery" {
   depends_on = [
     time_sleep.wait_for_project_services
   ]
-  source = "../../modules/bigquery"
+  source     = "../../modules/bigquery"
   dataset_id = var.dataset_id
   project_id = var.project_id
 }

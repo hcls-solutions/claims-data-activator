@@ -3,11 +3,11 @@ steps:
   args:
   - build
   - '--build-arg'
-  - 'BASE_IMG=gcr.io/${_PROJECT_ID}/common'
+  - 'BASE_IMG=${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/common'
   - '-t'
-  - 'gcr.io/${_PROJECT_ID}/${_IMAGE}:latest'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE}:latest'
   - '--cache-from'
-  - 'gcr.io/${_PROJECT_ID}/${_IMAGE}:latest'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE}:latest'
   - '-f'
   - Dockerfile
   - .
@@ -15,7 +15,7 @@ steps:
 - name: gcr.io/cloud-builders/docker
   args:
   - push
-  - 'gcr.io/${_PROJECT_ID}/${_IMAGE}'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE}'
 
 images:
-- 'gcr.io/$PROJECT_ID/${_IMAGE}:latest'
+- '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE}:latest'

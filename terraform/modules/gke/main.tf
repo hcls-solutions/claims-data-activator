@@ -22,9 +22,9 @@ locals {
 
 
 module "gke_cluster" {
-  source                     = "terraform-google-modules/kubernetes-engine/google//modules/beta-private-cluster"
+  source                     = "terraform-google-modules/kubernetes-engine/google//modules/private-cluster"
   project_id                 = var.project_id
-  version                    = "30.0.0"
+  version                    = "33.0.4"
   name                       = var.cluster_name
   kubernetes_version         = var.kubernetes_version
   region                     = var.region
@@ -50,9 +50,14 @@ module "gke_cluster" {
       machine_type       = var.machine_type
       min_count          = var.min_node_count
       max_count          = var.max_node_count
+      local_ssd_count    = 0
+      spot               = false
       disk_size_gb       = var.disk_size_gb
+      node_version       = var.kubernetes_version
       disk_type          = "pd-standard"
       image_type         = "COS_CONTAINERD"
+      enable_gcfs        = false
+      enable_gvnic       = false
       auto_repair        = true
       auto_upgrade       = true
       preemptible        = false

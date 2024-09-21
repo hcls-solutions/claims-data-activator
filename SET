@@ -49,12 +49,12 @@ export TF_VAR_region=$REGION
 export TF_VAR_iap_secret_name="${IAP_SECRET_NAME}"
 export TF_VAR_dataset_id="${BIGQUERY_DATASET}"
 export TF_VAR_service_account_name_gke=${SA_GKE}
-
+export TF_VAR_repo_name="ar-artifacts"
 # used by Microservices
 export CONFIG_BUCKET=${TF_VAR_config_bucket}
 export DEBUG=True
 
-export SKAFFOLD_DEFAULT_REPO="$REGION-docker.pkg.dev/$PROJECT_ID/gcr-artifacts"
+export SKAFFOLD_DEFAULT_REPO="$REGION-docker.pkg.dev/$PROJECT_ID/$TF_VAR_repo_name"
 
 #export DOCAI_WH_PROJECT_ID=${DOCAI_WH_PROJECT_ID:-$PROJECT_ID} Disabling DocAI WH
 export DOCAI_WH_PROJECT_ID=$PROJECT_ID

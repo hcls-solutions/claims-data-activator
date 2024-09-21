@@ -77,6 +77,7 @@ create_sa () {
     "roles/secretmanager.secretAccessor"
     "roles/storage.admin"
     "roles/viewer"
+    "roles/artifactregistry.admin"
   )
   service_account_name="terraform-sa"
   

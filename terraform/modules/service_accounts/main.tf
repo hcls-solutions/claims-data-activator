@@ -22,6 +22,23 @@ locals {
     "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
     "serviceAccount:service-${data.google_project.project.number}@gcp-sa-aiplatform.iam.gserviceaccount.com",
   ]
+
+  roles_for_default_sa = [
+    "roles/compute.admin",
+    "roles/compute.serviceAgent",
+    "roles/eventarc.admin",
+    "roles/eventarc.eventReceiver",
+    "roles/eventarc.serviceAgent",
+    "roles/datastore.owner",
+    "roles/firebase.admin",
+    "roles/iam.serviceAccountTokenCreator",
+    "roles/iam.serviceAccountUser",
+    "roles/run.admin",
+    "roles/run.invoker",
+    "roles/serviceusage.serviceUsageConsumer",
+    "roles/artifactregistry.admin",
+    "roles/storage.admin",
+  ]
 }
 
 data "google_project" "project" {}
@@ -77,5 +94,13 @@ module "default_sa_iam_bindings" {
     "roles/run.invoker"                       = local.default_sa_list
     "roles/serviceusage.serviceUsageConsumer" = local.default_sa_list
     "roles/storage.admin"                     = local.default_sa_list
+    "roles/artifactregistry.admin"            = local.default_sa_list
   }
+}
+
+resource "google_project_iam_member" "default-compute-sa-iam" {
+  for_each   = toset(local.roles_for_default_sa)
+  role       = each.key
+  member     = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  project    = var.project_id
 }
