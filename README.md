@@ -202,9 +202,12 @@ sed 's|"PROJECT_ID|'\""$PROJECT_ID"'|g; s|API_DOMAIN|'"$API_DOMAIN"'|g; ' micros
 ```
 
 ### Enable Firebase Auth
-- Before enabling firebase, make sure [Firebase Management API](https://console.cloud.google.com/apis/api/firebase.googleapis.com/metrics) should be disabled in GCP API & Services.
-- Go to [Firebase Console UI](https://console.firebase.google.com/) to add your existing project. Select “Pay as you go” and Confirm plan.
-- On the left panel of Firebase Console UI, go to Build > Authentication, and click Get Started.
+- Go to [Firebase Console UI](https://console.firebase.google.com/) to add your existing project.
+- Select "+ Create a project"
+- On the new window click a link `Add Firebase to Google Cloud project` which appears under **Already have a Google Cloud project?**.
+- Select you new project from the drop down menu and click `Continue`
+- Select “Pay as you go” and Confirm plan.
+- On the left panel of Firebase Console UI, go to `Build` > `Authentication`, and click Get Started.
   - Select Email/Password as a Sign in method and click Enable => Save. Note them down, you will need it to sign in.
   - Go to users and add email/password for a valid Sign in method
     - Add user (Note down email/password, you will need it to sign in.)

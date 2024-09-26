@@ -192,15 +192,8 @@ module "gke" {
   service_account_name = var.service_account_name_gke
 
   # See latest stable version at https://cloud.google.com/kubernetes-engine/docs/release-notes-stable
-  kubernetes_version = "1.28.13-gke.1006000"
+  kubernetes_version = "latest"
 
-}
-
-resource "google_artifact_registry_repository" "cda-ar" {
-  repository_id = var.repo_name
-  format        = "DOCKER"
-  location      = var.region
-  description   = "CDA Docker repository"
 }
 
 module "cloudrun-queue" {
@@ -208,7 +201,7 @@ module "cloudrun-queue" {
     time_sleep.wait_for_project_services,
     module.vpc_network,
     module.vpc_serverless_connector,
-    google_artifact_registry_repository.cda-ar
+    google_artifact_registry_repository.docker_repository
   ]
   source             = "../../modules/cloudrun"
   project_id         = var.project_id
@@ -226,7 +219,7 @@ module "cloudrun-start-pipeline" {
     time_sleep.wait_for_project_services,
     module.vpc_network,
     module.vpc_serverless_connector,
-    google_artifact_registry_repository.cda-ar
+    google_artifact_registry_repository.docker_repository
   ]
   source             = "../../modules/cloudrun"
   project_id         = var.project_id
@@ -247,7 +240,7 @@ data "google_cloud_run_service" "queue-run" {
     time_sleep.wait_for_project_services,
     module.vpc_network,
     module.cloudrun-queue,
-    google_artifact_registry_repository.cda-ar
+    google_artifact_registry_repository.docker_repository
   ]
   name     = "queue-cloudrun"
   location = local.region
@@ -526,7 +519,7 @@ resource "null_resource" "sample-data" {
 
 resource "google_artifact_registry_repository" "docker_repository" {
   location      = var.region
-  repository_id = "gcr-artifacts"
+  repository_id = var.repo_name
   description   = "Docker repository for Microservices"
   format        = "DOCKER"
 }

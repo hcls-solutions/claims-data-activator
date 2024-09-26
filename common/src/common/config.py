@@ -32,7 +32,7 @@ if PROJECT_ID != "":
   os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
 assert PROJECT_ID, "Env var PROJECT_ID is not set."
 
-REGION = "us-central1"
+REGION = os.environ.get("REGION", "us-central1")
 PROCESS_TIMEOUT_SECONDS = 600
 
 API_DOMAIN = os.getenv("API_DOMAIN")
@@ -55,7 +55,7 @@ STATUS_TIMEOUT = "Timeout"
 
 PDF_MIME_TYPE = "application/pdf"
 
-#For inter-process requests
+# For inter-process requests
 BASE_URL = os.getenv("BASE_URL", "http:/")
 
 DOC_CLASS_SPLIT_DISPLAY_NAME = "Sub-documents"

@@ -67,7 +67,8 @@ resource "null_resource" "build-common-image" {
     command = join(" ", [
       "gcloud builds submit",
       "--config=cloudbuild.yaml",
-      "--gcs-log-dir=gs://${var.project_id}-${var.name}-log",
+      "--gcs-source-staging-dir=gs://${var.project_id}-${var.name}-log/cblogs",
+      "--default-buckets-behavior=regional-user-owned-bucket",
       join("", [
         "--substitutions=",
         "_PROJECT_ID='${var.project_id}',",

@@ -55,7 +55,6 @@ else
 fi
 
 
-#skaffold run -p dev --default-repo=gcr.io/${PROJECT_ID} | tee -a "$LOG"
 skaffold run -p "$ENV" | tee -a "$LOG"
 
 
